@@ -1,0 +1,122 @@
+/*
+    author:bulletYuan.
+    createDate:2018-4-3
+
+    version:0.0.1
+    lastModifyDate:
+*/
+%w100-ha{width: 100%;height: auto;}
+$controlH:54px;
+$buffH:4px;
+
+video[data-bulletPlayer]{ display: none}
+div.playerContainer-bullet[data-bulletPlayer]{
+    @extend %w100-ha;
+    min-height: 320px;
+    overflow: hidden;
+    position: relative;
+    &>.titleBar{
+        @extend %w100-ha;
+        padding: 10px 0;
+        color: #fff;
+        font-size: 1.2rem;
+        text-align: center;
+        background: rgba(0,0,0,.63);
+        position: absolute;
+        top: -80px;
+        left: 0;
+        z-index: 1;
+        transition: all .3s;
+        &>p.titleText{ line-height: 2rem;}
+    }
+    &:hover .titleBar{ top: 0;}
+
+    &>canvas{
+        width:100%;
+        height: calc(100% + 4px);
+        background-color: #333;
+        cursor: pointer;
+    }
+
+    &.light>.controlBar{ background: rgba($color: #fafafa, $alpha: .23); color: #fafafa;
+        &>.progressBar>.playedBar{ background: #09c;}
+    }
+    &.dark>.controlBar{ background: rgba($color: #444, $alpha: .43); color: #ccc;
+        &>.progressBar>.playedBar{ background: #bb0606;}
+    }
+    &>.controlBar{
+        @extend %w100-ha;
+        background: rgba($color: #fff, $alpha: .23); color: #fff;
+        position: absolute;
+        bottom: - ($controlH - $buffH);
+        left: 0;
+        z-index: 1;
+        transition: all .3s;
+        &>.progressBar{
+            width: 100%;
+            height: $buffH;
+            background: #444;
+            position: relative;
+            &>.handle{ 
+                width: 4px;
+                height: 4px;
+                background: #fff;
+                box-shadow: 0 0 5px rgba(0,0,0,.53);
+                border-radius: 20px;
+                position: absolute;
+                top: 0;
+                left: 0;
+                z-index: 2;
+                cursor: pointer;
+                transition: all .2s;
+            }
+            &>.buffBar{
+                width: 0;
+                height: 100%;
+                background: rgba(255,255,255,.43);
+            }
+            &>.playedBar{
+                width: 0;
+                height: 100%;
+                top: 0;
+                background:#ddd;
+                position: absolute;
+            }
+        }
+        &>.toolBar{
+            width: 100%;
+            height: ($controlH - $buffH);
+            %barSize{
+                width: 50%;
+                height: 100%;
+            }
+            %btn{
+                width: 30px;
+                height: 30px;
+                padding: ((($controlH - $buffH) - 30px)/2);
+                text-align: center;
+                cursor: pointer;
+            }
+            &>.leftBar{
+                @extend %barSize;
+                float: left;
+                &>.playBtn{
+                    @extend %btn;
+                    width: 30px;
+                    float: left;
+                    transition: all .2s;
+                    &:hover{ background-color: #fafafa; color: #444;}
+                }
+            }
+            &>.rightBar{
+                @extend %barSize;
+                float: right;
+            }
+        }
+    }
+    &:hover .controlBar{ bottom: 4px;}
+    &:hover .controlBar>.progressBar>.handle{ 
+        width: 16px;
+        height: 16px;
+        top: -6px;}
+}

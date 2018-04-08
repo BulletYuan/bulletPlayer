@@ -1,0 +1,112 @@
+/*
+    author:bulletYuan.
+    createDate:2018-4-3
+
+    version:0.0.1
+    lastModifyDate:
+*/
+div.playerContainer-bullet[data-bulletPlayer], div.playerContainer-bullet[data-bulletPlayer] > .titleBar, div.playerContainer-bullet[data-bulletPlayer] > .controlBar {
+  width: 100%;
+  height: auto; }
+
+video[data-bulletPlayer] {
+  display: none; }
+
+div.playerContainer-bullet[data-bulletPlayer] {
+  min-height: 320px;
+  overflow: hidden;
+  position: relative; }
+  div.playerContainer-bullet[data-bulletPlayer] > .titleBar {
+    padding: 10px 0;
+    color: #fff;
+    font-size: 1.2rem;
+    text-align: center;
+    background: rgba(0, 0, 0, 0.63);
+    position: absolute;
+    top: -80px;
+    left: 0;
+    z-index: 1;
+    transition: all .3s; }
+    div.playerContainer-bullet[data-bulletPlayer] > .titleBar > p.titleText {
+      line-height: 2rem; }
+  div.playerContainer-bullet[data-bulletPlayer]:hover .titleBar {
+    top: 0; }
+  div.playerContainer-bullet[data-bulletPlayer] > canvas {
+    width: 100%;
+    height: calc(100% + 4px);
+    background-color: #333;
+    cursor: pointer; }
+  div.playerContainer-bullet[data-bulletPlayer].light > .controlBar {
+    background: rgba(250, 250, 250, 0.23);
+    color: #fafafa; }
+    div.playerContainer-bullet[data-bulletPlayer].light > .controlBar > .progressBar > .playedBar {
+      background: #09c; }
+  div.playerContainer-bullet[data-bulletPlayer].dark > .controlBar {
+    background: rgba(68, 68, 68, 0.43);
+    color: #ccc; }
+    div.playerContainer-bullet[data-bulletPlayer].dark > .controlBar > .progressBar > .playedBar {
+      background: #bb0606; }
+  div.playerContainer-bullet[data-bulletPlayer] > .controlBar {
+    background: rgba(255, 255, 255, 0.23);
+    color: #fff;
+    position: absolute;
+    bottom: -50px;
+    left: 0;
+    z-index: 1;
+    transition: all .3s; }
+    div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .progressBar {
+      width: 100%;
+      height: 4px;
+      background: #444;
+      position: relative; }
+      div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .progressBar > .handle {
+        width: 4px;
+        height: 4px;
+        background: #fff;
+        box-shadow: 0 0 5px rgba(0, 0, 0, 0.53);
+        border-radius: 20px;
+        position: absolute;
+        top: 0;
+        left: 0;
+        z-index: 2;
+        cursor: pointer;
+        transition: all .2s; }
+      div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .progressBar > .buffBar {
+        width: 0;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.43); }
+      div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .progressBar > .playedBar {
+        width: 0;
+        height: 100%;
+        top: 0;
+        background: #ddd;
+        position: absolute; }
+    div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .toolBar {
+      width: 100%;
+      height: 50px; }
+      div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .toolBar > .leftBar, div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .toolBar > .rightBar {
+        width: 50%;
+        height: 100%; }
+      div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .toolBar > .leftBar > .playBtn {
+        width: 30px;
+        height: 30px;
+        padding: 10px;
+        text-align: center;
+        cursor: pointer; }
+      div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .toolBar > .leftBar {
+        float: left; }
+        div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .toolBar > .leftBar > .playBtn {
+          width: 30px;
+          float: left;
+          transition: all .2s; }
+          div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .toolBar > .leftBar > .playBtn:hover {
+            background-color: #fafafa;
+            color: #444; }
+      div.playerContainer-bullet[data-bulletPlayer] > .controlBar > .toolBar > .rightBar {
+        float: right; }
+  div.playerContainer-bullet[data-bulletPlayer]:hover .controlBar {
+    bottom: 4px; }
+  div.playerContainer-bullet[data-bulletPlayer]:hover .controlBar > .progressBar > .handle {
+    width: 16px;
+    height: 16px;
+    top: -6px; }

@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>bulletPlayer-demo</title>
+
+    <style>
+    *{ margin: 0; padding: 0;}
+    </style>
+    <link href="./bulletPlayer.css" rel="stylesheet" />
+</head>
+<body>
+    <video data-bulletPlayer src="http://www.w3school.com.cn/i/movie.ogg"></video>
+    <div data-bulletPlayer class="playerContainer-bullet">
+        <div class="titleBar">
+            <p class="titleText">title...</p>
+        </div>
+        <canvas></canvas>
+        <div class="controlBar">
+            <div class="progressBar">
+                <div class="buffBar"></div>
+                <div class="playedBar"></div>
+                <div class="handle"></div>
+            </div>
+            <div class="toolBar">
+                <div class="leftBar">
+                    <div class="playBtn">play</div>
+                </div>
+                <div class="rightBar"></div>
+            </div>
+        </div>
+    </div>
+</body>
+<script>
+    let videoArr=document.querySelectorAll('video[data-bulletPlayer]'),
+        canvasArr=document.querySelectorAll('.playerContainer-bullet[data-bulletPlayer] canvas');
+    videoArr.forEach(el => {
+        
+    });
+</script>
+<script>
+    // let videoDomArr=[];
+    // videoDomArr=document.querySelectorAll('video[data-bulletPlayer]');
+    // console.log(videoDomArr);
+
+    // let videoDom=videoDomArr[0],
+    //     playerDom;
+    // videoDom.parentNode.insertBefore(videoDom,playerDom);
+</script>
+</html>
