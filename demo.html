@@ -34,9 +34,119 @@
 <script>
     let videoArr=document.querySelectorAll('video[data-bulletPlayer]'),
         canvasArr=document.querySelectorAll('.playerContainer-bullet[data-bulletPlayer] canvas');
-    videoArr.forEach(el => {
-        
+    videoArr.forEach((el,i) => {
+        video_bullet.initVideo(el,canvasArr[i]);
     });
+
+    video_bullet={
+        ctx:null,
+        cav:null,
+        video:null,
+
+        height:0,
+        width:0,
+        quality:1,
+        playSrc:"",
+
+        _buffered:0,  //已缓冲比例 0~1
+        _played:0,  //已播放比例 0~1
+        _current:0,  //当前所在时间点 单位s
+        _duration:0,  //视频总时长 单位s
+        _volume:1,  //音量 0~1
+        _fullScreen:0,  //0:非全屏 | 1:全屏 | -1:浏览器不支持全屏
+        _autoPlay:false,  //自动播放
+        _loop:false,  //循环播放c
+        _w2h:0,  //视频画面宽高比
+        _netState:0,  //0:NETWORK_EMPTY | 1:NETWORK_IDLE | 2:NETWORK_LOADING | 3:NETWORK_NO_SOURCE
+        _status:0,  //0:ended | 1:play | 2:pause | -1:error
+
+        initSize:function(){
+            this.quality=this.quality>1?1:this.quality;
+            this.width=cav.clientWidth*this.quality;
+            this._w2h=cav.clientWidth/cav.clientHeight;
+            this.height=this.width/this._w2h;
+            cav.width=this.width;
+            cav.height=this.height;
+        },
+        initParams:function(){
+            this.playSrc=this.video.currentSrc;
+            this.video.volume=this._volume;
+            this.video.autoPlay=this._autoPlay;
+            this.video.loop=this._loop;
+            this.video.controls=false;
+        },
+        refreshParams:function(){
+            if(!this.video) return false;
+            let v=this.video;
+
+            this._duration=v.duration;
+            this._current=v.currentTime;
+            this._buffered=v.buffered.end(v.buffered.length-1)/this._duration;
+            this._played=this._current/this._duration;
+            this._netState=v.networkState;
+            this._autoPlay=v.autoplay;
+            this._loop=v.loop;
+            if(!document.webkitFullscreenEnabled)  this._fullScreen=-1;
+            this._volume=v.volume;
+
+            if(v.ended)  this._status=0;
+            if(v.played)  this._status=1;
+            if(v.paused)  this._status=2;
+            if(v.error)  this._status=-1;
+        },
+        initVideo:function(el,cav){
+            this.cav=cav,
+            this.video=el,
+            this.ctx=cav.getContext('2d');
+
+            this.initParams();
+            this.refreshParams();
+            this.initVideoSize();
+
+            this._bindPlay();
+            this._bindPause();
+            this._bindEnded();
+        },
+
+        playVideo:function(){
+            this.video.play();
+        },
+        pauseVideo:function(){
+            this.video.pause();
+        },
+        fullScreen:function(){
+            if(document.webkitFullscreenEnabled&&document.webkitCurrentFullScreenElement){
+                let that=this;
+                document.webkitCurrentFullScreenElement.forEach(el=>{
+                    if(el!=that.video)  el.webkitExitFullScreen();
+                });
+                if(!this.video.webkitDisplayingFullscreen)  this.video.webkitEnterFullScreen();
+            }
+        },
+
+        _bindPlay:function(){
+            this.video.addEventListener('play',function(){
+                _drawCav();
+            },false);
+        },
+        _bindPause:function(){
+            this.video.addEventListener('pause',function(){
+                _stopCav();
+            },false);
+        },
+        _bindEnded:function(){
+            this.video.addEventListener('ended',function(){
+                _resetCav();
+            },false);
+        },
+
+        _drawCav:function(){
+            if(this._status!==1)    return false;
+            setTimeout(()=>{this.ctx.drawImage(this.video,0,0,this.width,this.height)},10);
+        },
+        _stopCav:function(){},
+        _resetCav:function(){},
+    };
 </script>
 <script>
     // let videoDomArr=[];
