@@ -10,7 +10,7 @@
     <link href="./bulletPlayer.css" rel="stylesheet" />
 </head>
 <body>
-    <video data-bulletPlayer src="http://www.w3school.com.cn/i/movie.ogg"></video>
+    <video data-bulletPlayer src="http://pgccdn.v.baidu.com/2814229709_3538424383_20171208094615.mp4?authorization=bce-auth-v1%2Fc308a72e7b874edd9115e4614e1d62f6%2F2017-12-08T01%3A46%3A33Z%2F-1%2F%2F6c1227b1cdfdd18aac6113b21417410713820acb556bc856acad153bd740f237&responseCacheControl=max-age%3D8640000&responseExpires=Sun%2C+18+Mar+2018+09%3A46%3A33+GMT&xcode=14292fba06085d817d68b489e1709e1246490c93ba2ed457&time=1523345317&_=1523258935852"></video>
     <div data-bulletPlayer class="playerContainer-bullet">
         <div class="titleBar">
             <p class="titleText">title...</p>
@@ -25,10 +25,21 @@
             <div class="toolBar">
                 <div class="leftBar">
                     <div class="playBtn">play</div>
+                    <div class="duration"><span>00:00:00</span> / <span>00:00:00</span></div>
                 </div>
-                <div class="rightBar"></div>
+                <div class="rightBar">
+                    <div class="fullScreenBtn">fullScreen</div>
+                    <div class="volumeBar">
+                        <span class="volumeNum">0</span>
+                        <p class="volume">
+                            <span class="volumeHandler"></span>
+                            <span class="volumeValue"></span>
+                        </p>
+                    </div>
+                </div>
             </div>
         </div>
+        <div class="playedCon"><div class="playBtn">play</div></div>
     </div>
 </body>
 <script>
@@ -43,6 +54,7 @@
         quality:1,
         playSrc:"",
         volume:1,  //音量 0~1
+        debug:true,
 
         _buffered:0,  //已缓冲比例 0~1
         _played:0,  //已播放比例 0~1
@@ -55,6 +67,9 @@
         _status:0,  //0:ended | 1:play | 2:pause | -1:error
         _interval:null,
 
+        /*
+            外部调用事件
+        */
         playVideo:function(){
             if(!this.video) return false;
             this.video.play();
@@ -63,73 +78,169 @@
             if(!this.video) return false;
             this.video.pause();
         },
-        setVolume:function(vol=0){
-            if(!this.video) return false;
-            this.video.volume=vol;
-            this.volume=vol;
+        getVolume:function(){
+            if(!this.video||!this.con) return false;
+            this.volume=this.video.volume;
+            let aw=this.con.querySelector('.volume').clientWidth,
+                vh=this.con.querySelector('.volumeHandler'),
+                vv=this.con.querySelector('.volumeValue'),
+                vn=this.con.querySelector('.volumeNum');
+            vh.style.left=(aw*this.volume-vh.clientWidth)+"px";
+            vv.style.width=(aw*this.volume-vh.clientWidth/2)+"px";
+            vn.innerHTML=this.volume*100;
             return this.volume;
         },
-        fullScreen:function(){
+        setVolume:function(vol=1){
+            if(!this.video||!this.con) return false;
+            this.video.volume=vol;
+            this.volume=vol;
+            let aw=this.con.querySelector('.volume').clientWidth,
+                vh=this.con.querySelector('.volumeHandler'),
+                vv=this.con.querySelector('.volumeValue'),
+                vn=this.con.querySelector('.volumeNum');
+            vh.style.left=(aw*this.volume-vh.clientWidth)+"px";
+            vv.style.width=(aw*this.volume-vh.clientWidth/2)+"px";
+            vn.innerHTML=this.volume*100;
+        },
+        exitFullScreen:function(){
+            if(!this.video||!this.con) return false;
+            if(document.webkitFullscreenEnabled){
+                this._fullScreen=0;
+                this.con.style.height='600px';
+                this._initSize();
+                this._refreshUI();
+                // if(!this.video.webkitDisplayingFullscreen)  this.video.webkitEnterFullScreen();
+            }
+        },
+        enterFullScreen:function(){
             if(!this.video) return false;
-            if(document.webkitFullscreenEnabled&&document.webkitCurrentFullScreenElement){
+            if(document.webkitFullscreenEnabled){
                 let that=this;
-                document.webkitCurrentFullScreenElement.forEach(el=>{
-                    if(el!=that.video)  el.webkitExitFullScreen();
-                });
-                if(!this.video.webkitDisplayingFullscreen)  this.video.webkitEnterFullScreen();
+                if(document.webkitCurrentFullScreenElement){
+                    document.webkitCurrentFullScreenElement.forEach(el=>{
+                        if(el!=that.video)  el.webkitExitFullScreen();
+                    });
+                }
+                this._fullScreen=1;
+                this.con.style.height=window.screen.availHeight+'px';
+                this._initSize();
+                this._refreshUI();
+                // if(!this.video.webkitDisplayingFullscreen)  this.video.webkitEnterFullScreen();
             }
         },
         
         initVideo:function(el,con){
             this.con=con,
             this.video=el,
-            this.cav=con.querySelector('canvas');
+            this.cav=this.con.querySelector('canvas');
             this.ctx=this.cav.getContext('2d');
-
-            this._initParams();
-
-            this._bindPlay();
-            this._bindPause();
-            this._bindEnded();
-            this._bindHandlerDrag();
             
-            this.video.addEventListener('loadeddata',()=>{
-                this.refreshParams();
-                this.refreshUI();
-                this._initSize();
+            this._initParams();
+            this._showControlBar();
+            this._showTitleBar();
+            this._showCursor();
+            //提示元数据开始加载
+            this.video.addEventListener('loadstart',()=>{
+                this._console(0,'loadstart');
             },false);
+            //提示时长已改变
+            this.video.addEventListener('durationchange',()=>{
+                this._console(0,'durationchange');
+                this._refreshUI_duration();
+                
+                this._bindMouseListener();
+                this._hideControlBar();
+                this._hideTitleBar();
+                this._hideCursor();
+            },false);
+            //提示元数据已加载
+            this.video.addEventListener('loadedmetadata',()=>{
+                this._console(0,'loadedmetadata');
+                this._refreshUI_buffBar();
+                this._refreshParams();
+            },false);
+            //提示当前帧的数据可用
+            this.video.addEventListener('loadeddata',()=>{
+                this._console(0,'loadeddata');
+                this._refreshParams();
+
+                this._initSize();
+                this._refreshUI();
+                this._getVideoPoster();
+            },false);
+            //提示视频正在下载中
+            this.video.addEventListener('progress',()=>{
+                this._console(0,'progress');
+                this._refreshUI_buffBar();
+            },false);
+            //提示已准备好开始播放
+            this.video.addEventListener('canplay',()=>{
+                this._console(0,'canplay');
+                this._refreshParams();
+
+                this._initSize();
+                this._refreshUI();
+                
+                this._bindFullScreen();
+                this._bindVolumeChanged();
+                this._bindPlay();
+                this._bindPause();
+                this._bindEnded();
+                this._bindHandlerDrag();
+            },false);
+            //提示能够不停顿地一直播放
+            // this.video.addEventListener('canplaythrough',()=>{
+            //     console.log('canplaythrough');
+            // },false);
             window.addEventListener('resize',()=>{
                 this._initSize();
-                this.refreshUI();
+                this._refreshUI();
             },false);
         },
 
+        /*
+            初始或重置参数
+        */
         _initSize:function(){
             if(!this.video||!this.con||!this.cav) return false;
-            let _w2h=0;  //视频画面宽高比
             this.quality=this.quality>1?1:this.quality;
-            let vw=this.video.videoWidth,vh=this.video.videoWidth;
-            if(vh>=this.con.clientHeight){
-                _w2h=vw/vh;
-                this.height=this.con.clientHeight;
-                this.width=this.height*_w2h;
-            }else{
-                this.height=vh;
-                _w2h=vw/vh;
-                this.width=this.height*_w2h;
-            }
-            this.cav.width=this.width*this.quality;
-            this.cav.height=this.cav.width/_w2h;
+            let _w2h=0,vw=this.video.videoWidth,vh=this.video.videoHeight;
+            if(vh>=this.con.clientHeight) this.height=this.con.clientHeight;
+            else  this.height=vh;
+            _w2h=vw/vh;
+            this.width=this.height*_w2h;
+            this.cav.height=this.height*this.quality;
+            this.cav.width=this.cav.height*_w2h;
+            this.cav.style.width=(this.cav.clientHeight*_w2h)+"px";
         },
         _initParams:function(){
             if(!this.video) return false;
+            clearInterval(this._interval);
+            this._interval=null;
             this.playSrc=this.video.currentSrc;
             this.video.volume=this.volume;
             this.video.autoPlay=this._autoPlay;
             this.video.loop=this._loop;
             this.video.controls=false;
         },
-        refreshParams:function(){
+        _resetParams:function(){
+            this._duration=0;
+            this._current=0;
+            this._buffered=0;
+            this._played=this._current/this._duration;
+            this._netState=v.networkState;
+            this._autoPlay=false;
+            this._loop=false;
+            if(!document.webkitFullscreenEnabled)  this._fullScreen=-1;
+            this._status=0;
+            clearInterval(this._interval);
+            this._interval=null;
+        },
+
+        /*
+            刷新参数及界面
+        */
+        _refreshParams:function(){
             if(!this.video) return false;
             let v=this.video;
 
@@ -147,19 +258,146 @@
             if(v.paused)  this._status=2;
             if(v.error)  this._status=-1;
         },
-        refreshUI:function(){
+        _refreshUI:function(){
             if(!this.video||!this.con) return false;
             if(this._status===0 || this._status===-1)  this._resetCav();
             if(this._status===1)  this._drawCav();
             if(this._status===2)  this._stopCav();
             let buffBar=this.con.querySelector('.buffBar'),
                 playedBar=this.con.querySelector('.playedBar'),
-                handle=this.con.querySelector('.handle');
+                handle=this.con.querySelector('.handle'),
+                duration=this.con.querySelector('.duration');
+            this.getVolume();
+            this._refreshUI_duration(duration);
+            this._refreshUI_buffBar(buffBar);
+            this._refreshUI_playedBar(playedBar,handle);
+            this._refreshUI_handle(handle);
+        },
+        _refreshUI_duration:function(duration){
+            if(duration)  duration.innerHTML=this._transformTime(this._current)+" / "+this._transformTime(this._duration);
+            return duration;
+        },
+        _refreshUI_buffBar:function(buffBar){
             if(buffBar)  buffBar.style.width=(this._buffered*100)+"%";
-            if(playedBar)  playedBar.style.width=(this._played*100)+"%";
+            return buffBar;
+        },
+        _refreshUI_playedBar:function(playedBar,handle){
+            if(playedBar&&handle)  playedBar.style.width=(this._played*this.con.clientWidth-handle.clientWidth/2)+"px";
+            return playedBar;
+        },
+        _refreshUI_handle:function(handle){
             if(handle)  handle.style.left=(this._played*this.con.clientWidth-handle.clientWidth/2)+"px";
+            return handle;
         },
 
+        /*
+            内部绑定事件
+        */
+        _bindFullScreen:function(){
+            if(!this.con)  return false;
+            let fs=this.con.querySelector('.fullScreenBtn');
+            fs.addEventListener('click',()=>{
+                if(this._fullScreen>-1){
+                    if(this._fullScreen===0)  this.enterFullScreen();
+                    else  this.exitFullScreen();
+                }
+            },false);
+        },
+        _bindVolumeChanged:function(){
+            if(!this.con)  return false;
+            let aw=this.con.querySelector('.volume').clientWidth,
+                v=this.con.querySelector('.volume'),
+                handle=this.con.querySelector('.volumeHandler'),
+                vv=this.con.querySelector('.volumeValue'),
+                vn=this.con.querySelector('.volumeNum'),
+             self=this,_dragState=2;  //0:touchstart/mousedown | 1:touchmove/mousemove |2:touchend/mouseup
+             
+            if(window.ontouchstart){
+                handle.ontouchstart=function(ev){
+                    _dragState=0;
+                    document.ontouchmove=function(ev){
+                        _dragState=1;
+                        if(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft>=handle.clientWidth&&
+                        ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft<=aw){
+                            handle.style.left=(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft-handle.clientWidth)+'px';
+                            vv.style.width=(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft-handle.clientWidth/2)+'px';
+                            vn.innerHTML=Math.floor(((Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth))*100);
+                            self.video.volume=(Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth);
+                        }
+                    };
+                    document.ontouchend=function(){
+                        _dragState=2;
+                        document.onmousemove=null;
+                        document.onmouseup=null;
+                    };
+                };
+            }else{
+                handle.onmousedown=function(ev){
+                    _dragState=0;
+                    document.onmousemove=function(ev){
+                        _dragState=1;
+                        if(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft>=handle.clientWidth&&
+                        ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft<=aw){
+                            handle.style.left=(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft-handle.clientWidth)+'px';
+                            vv.style.width=(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft-handle.clientWidth/2)+'px';
+                            vn.innerHTML=Math.floor(((Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth))*100);
+                            self.video.volume=(Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth);
+                        }
+                    };
+                    self.con.onmouseleave=document.onmouseup=function(){
+                        _dragState=2;
+                        document.onmousemove=null;
+                        document.onmouseup=null;
+                        self.con.onmouseleave=null;
+                    };
+                };
+            }
+        },
+        _bindMouseListener:function(){
+            if(!this.con)  return false;
+            let self=this,
+            _mX=0,_mY=0,_mT=null;
+            this.con.addEventListener('mousemove',function(ev){
+                _mX=0,_mY=0;
+                clearTimeout(_mT);
+                _mT=null;
+                self._showControlBar();
+                self._showTitleBar();
+                self._showCursor();
+                _mX=ev.screenX,
+                _mY=ev.screenY;
+                _mT=setTimeout(()=>{
+                    if(_mX!==0&&_mY!==0&&_mX===ev.screenX&&_mY===ev.screenY){
+                        self._hideControlBar();
+                        self._hideTitleBar();
+                        self._hideCursor();
+                    }else{
+                        self._showControlBar();
+                        self._showTitleBar();
+                        self._showCursor();
+                    }
+                    _mX=0,_mY=0;
+                    clearTimeout(_mT);
+                    _mT=null;
+                },3000);
+                
+            },false);
+            this.con.addEventListener('mouseleave',function(ev){
+                _mX=0,_mY=0;
+                clearTimeout(_mT);
+                _mT=null;
+                self._hideControlBar();
+                self._hideTitleBar();
+                self._hideCursor();
+            });
+        },
+        _bindKeysListener:function(){
+            if(!this.con)  return false;
+            let self=this;
+            this.con.addEventListener('keypress',function(ev){
+
+            });
+        },
         _bindHandlerDrag:function(){
             if(!this.con)   return false;
             let handle=this.con.querySelector('.handle'),
@@ -177,6 +415,7 @@
                         _dragState=2;
                         document.onmousemove=null;
                         document.onmouseup=null;
+                        self.video.play();
                     };
                 };
             }else{
@@ -191,60 +430,136 @@
                         _dragState=2;
                         document.onmousemove=null;
                         document.onmouseup=null;
+                        self.video.play();
                     };
                 };
             }
         },
-
         _bindPlay:function(){
-            if(!this.video||!this.con)   return false;
+            if(!this.video||!this.con||!this.cav)   return false;
             let self=this;
-            let play=this.con.querySelector('.playBtn');
-            play.onclick=()=>{
+            this.con.querySelectorAll('.playBtn').forEach(el=>{
+                el.onclick=()=>{
+                    if(self._status===0||self._status===2)  self.playVideo();
+                    if(self._status===1)  self.pauseVideo();
+                };
+            });
+            this.cav.onclick=()=>{
                 if(self._status===0||self._status===2)  self.playVideo();
                 if(self._status===1)  self.pauseVideo();
             };
             this.video.addEventListener('play',function(){
+                self.con.querySelector('.playedCon').style.display='none';
+                self.con.querySelectorAll('.playBtn').forEach(el=>{
+                    el.innerHTML="pause";
+                });
                 self._status=1;
                 self._interval=setInterval(()=>{
-                    self.refreshParams();
-                    self.refreshUI();
-                },100)
+                    self._refreshParams();
+                    self._refreshUI();
+                },1000/30);
             },false);
         },
         _bindPause:function(){
-            if(!this.video)   return false;
+            if(!this.video||!this.con)   return false;
             let self=this;
-            self._interval=null;
             this.video.addEventListener('pause',function(){
+                self.con.querySelector('.playedCon').style.display='block';
+                self.con.querySelectorAll('.playBtn').forEach(el=>{
+                    el.innerHTML="play";
+                });
+                clearInterval(self._interval);
+                self._interval=null;
                 self._status=2;
-                self.refreshParams();
-                self.refreshUI();
+                self._refreshParams();
+                self._refreshUI();
             },false);
         },
         _bindEnded:function(){
-            if(!this.video)   return false;
+            if(!this.video||!this.con)   return false;
             let self=this;
-            self._interval=null;
             this.video.addEventListener('ended',function(){
+                self.con.querySelector('.playedCon').style.display='block';
+                self.con.querySelectorAll('.playBtn').forEach(el=>{
+                    el.innerHTML="play";
+                });
+                clearInterval(self._interval);
+                self._interval=null;
                 self._status=1;
-                self.refreshParams();
-                self.refreshUI();
+                self._refreshParams();
+                self._getVideoPoster();
+                self._refreshUI();
             },false);
         },
 
+        /*
+            内部调用事件
+        */
+        _showControlBar:function(){
+            if(!this.con)  return false;
+            this.con.querySelector('.controlBar').style.bottom="0px";
+        },
+        _hideControlBar:function(){
+            if(!this.con)  return false;
+            this.con.querySelector('.controlBar').style.bottom=`-${this.con.querySelector('.controlBar').clientHeight-this.con.querySelector('.progressBar').clientHeight}px`;
+        },
+        _showTitleBar:function(){
+            if(!this.con)  return false;
+            this.con.querySelector('.titleBar').style.top="0px";
+        },
+        _hideTitleBar:function(){
+            if(!this.con)  return false;
+            this.con.querySelector('.titleBar').style.top=`-${this.con.querySelector('.titleBar').clientHeight}px`;
+        },
+        _showCursor:function(){
+            if(!this.con||!this.cav)  return false;
+            this.con.style.cursor='pointer';
+            this.cav.style.cursor='pointer';
+        },
+        _hideCursor:function(){
+            if(!this.con||!this.cav)  return false;
+            this.con.style.cursor='none';
+            this.cav.style.cursor='none';
+        },
+        _getVideoPoster:function(){
+            if(!this.video||!this.cav||!this.ctx)  return false;
+            this.video.currentTime=0;
+            this.ctx.drawImage(this.video, 0, 0, this.cav.clientWidth, this.cav.clientHeight);
+        },
+
+        /*
+            canvas操作
+        */
         _drawCav:function(){
-            if(!this.ctx)   return false;
+            if(!this.ctx||!this.video||this._status!==1)   return false;
             let self=this;
-            if(this._status!==1)    return false;
-            setTimeout(()=>{self.ctx.drawImage(self.video,0,0,self.width,self.height)},10);
+            self.ctx.drawImage(self.video,0,0,self.width,self.height)
         },
         _stopCav:function(){
             if(!this.ctx)   return false;
             let self=this;
-            setTimeout(()=>{self.ctx.drawImage(self.video,0,0,self.width,self.height)},10);
+            self.ctx.drawImage(self.video,0,0,self.width,self.height)
         },
-        _resetCav:function(){}
+        _resetCav:function(){},
+
+        /*
+            工具类
+        */
+        _transformTime:function(sec){
+            if(!sec||typeof sec!=="number") sec=0;
+            let h=Math.floor(sec/3600);
+            let m=Math.floor((sec-h*3600)/60);
+            let s=Math.floor(sec-h*3600-m*60);
+            let str=(h>=10?h:"0"+h)+":"+(m>=10?m:"0"+m)+":"+(s>=10?s:"0"+s);
+            return str;
+        },
+        _console:function(type=0,...arg){
+            if(this.debug){
+                if(type===0)  console.log(...arg);
+                if(type===1)  console.info(...arg);
+                if(type===2)  console.error(...arg);
+            }
+        },
     };
 </script>
 <script>

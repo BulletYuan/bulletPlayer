@@ -3,7 +3,7 @@
     createDate:2018-4-3
 
     version:0.0.1
-    lastModifyDate:
+    lastModifyDate:2018-4-9
 */
 %w100-ha{width: 100%;height: auto;}
 $controlH:54px;
@@ -12,9 +12,38 @@ $buffH:4px;
 video[data-bulletPlayer]{ display: none}
 div.playerContainer-bullet[data-bulletPlayer]{
     @extend %w100-ha;
+    height: 600px;
     background-color: #333;
     overflow: hidden;
     position: relative;
+    cursor: none;
+    &>.playedCon{
+        width: 100%;
+        height: 100%;
+        background: rgba(0,0,0,.33);
+        position: absolute;
+        top: 0;
+        z-index: 1;
+        transition: all .2s;
+        &>.playBtn{
+            width: 80px;
+            height: 80px;
+            line-height: 80px;
+            background: rgba(0, 0, 0, 0.73);
+            box-shadow: 0 0 5px rgba(255, 255, 255, 0.33);
+            color: #fff;
+            font-size: 22px;
+            font-weight: bold;
+            border-radius: 80px;
+            text-align: center;
+            cursor: pointer;
+            transition: all .3s;
+            position: absolute;
+            top: 50%; margin-top: -40px;
+            left: 50%; margin-left: -40px;
+        }
+    }
+
     &>.titleBar{
         @extend %w100-ha;
         padding: 10px 0;
@@ -25,18 +54,15 @@ div.playerContainer-bullet[data-bulletPlayer]{
         position: absolute;
         top: -80px;
         left: 0;
-        z-index: 1;
+        z-index: 2;
         transition: all .3s;
         &>p.titleText{ line-height: 2rem;}
     }
-    &:hover .titleBar{ top: 0;}
 
     &>canvas{
-        width:100%;
-        height: calc(100% + 4px);
-        background-color: #333;
+        height: 100%;
+        margin: 0 auto;
         display: inherit;
-        cursor: pointer;
     }
 
     &.light>.controlBar{ background: rgba($color: #fafafa, $alpha: .23); color: #fafafa;
@@ -47,11 +73,13 @@ div.playerContainer-bullet[data-bulletPlayer]{
     }
     &>.controlBar{
         @extend %w100-ha;
-        background: rgba($color: #fff, $alpha: .23); color: #fff;
+        -webkit-user-select:none; -moz-user-select:none; 
+        -ms-user-select:none; user-select:none;
+        background: rgba($color: #333, $alpha: .43); color: #fff;
         position: absolute;
         bottom: - ($controlH - $buffH);
         left: 0;
-        z-index: 1;
+        z-index: 2;
         transition: all .3s;
         &>.progressBar{
             width: 100%;
@@ -69,7 +97,6 @@ div.playerContainer-bullet[data-bulletPlayer]{
                 left: 0;
                 z-index: 2;
                 cursor: pointer;
-                transition: all .2s;
             }
             &>.buffBar{
                 width: 0;
@@ -92,30 +119,81 @@ div.playerContainer-bullet[data-bulletPlayer]{
                 height: 100%;
             }
             %btn{
-                width: 30px;
+                min-width: 30px;
                 height: 30px;
                 padding: ((($controlH - $buffH) - 30px)/2);
                 text-align: center;
                 cursor: pointer;
+                transition: all .2s;
             }
             &>.leftBar{
                 @extend %barSize;
                 float: left;
                 &>.playBtn{
                     @extend %btn;
-                    width: 30px;
+                    width: 60px;
+                    line-height: 30px;
                     float: left;
-                    transition: all .2s;
-                    &:hover{ background-color: #fafafa; color: #444;}
+                    &:hover{ background-color: rgba($color: #fafafa, $alpha: 0.84); color: #444;}
+                }
+                &>.duration{
+                    @extend %btn;
+                    line-height: 30px;
+                    float: left;
+                    font-size: 12px;
                 }
             }
             &>.rightBar{
                 @extend %barSize;
                 float: right;
+                &>.fullScreenBtn{
+                    @extend %btn;
+                    line-height: 30px;
+                    float: right;
+                    &:hover{ background-color: rgba($color: #fafafa, $alpha: 0.84); color: #444;}
+                }
+                &>.volumeBar{
+                    @extend %btn;
+                    line-height: 30px;
+                    float: right;
+                    position: relative;
+                    &>.volumeNum{ font-size: 12px;}
+                    &>.volumeNum,&>.volume{ float: left;}
+                    &>.volume{
+                        width: 120px;
+                        height: 12px;
+                        background: rgba(255,255,255,.43);
+                        box-shadow: 0 0 4px rgba(0,0,0,.33) inset;
+                        margin-top: 9px;
+                        margin-left: 10px;
+                        border-radius: 20px;
+                        position: relative;
+                        overflow: hidden;
+                        &>span{
+                            height: 100%;
+                        }
+                        &>.volumeHandler{
+                            width: 12px;
+                            background: #fff;
+                            cursor: pointer;
+                            position: absolute;
+                            top: 0;left: 0;
+                            z-index: 1;
+                            border-radius: 20px;
+                        }
+                        &>.volumeValue{
+                            width: 0;
+                            height: 100%;
+                            position: absolute;
+                            top: 0;
+                            left: 0;
+                            background: #ccc;
+                        }
+                    }
+                }
             }
         }
     }
-    &:hover .controlBar{ bottom: 0;}
     &:hover .controlBar>.progressBar>.handle{ 
         width: 16px;
         height: 16px;
