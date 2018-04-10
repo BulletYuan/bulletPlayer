@@ -1,27 +1,30 @@
-function bulletPlayer(){
-    let self=this;
-    let ctx=null,
-        cav=null,
-        con=null,
-        video=null,
+function bulletPlayer(obj){
+    let SELF=this;
+    let CTX=null,
+        CAV=null,
+        CON=null,
+        VIDEO=null,
 
-        height=0,
-        width=0,
-        quality=1,
-        playSrc="",
-        volume=1,  //音量 0~1
-        debug=true,
+        HEIGHT=0,
+        WIDTH=0,
+        QUALITY=1,
+        PLAYSRC="",
+        VOLUME=1,  //音量 0~1
+        DEBUG=true,
+        TITLE="",
 
-        _buffered=0,  //已缓冲比例 0~1
-        _played=0,  //已播放比例 0~1
-        _current=0,  //当前所在时间点 单位s
-        _duration=0,  //视频总时长 单位s
-        _fullScreen=0,  //0:非全屏 | 1:全屏 | -1:浏览器不支持全屏
-        _autoPlayfalse,  //自动播放
-        _loopfalse,  //循环播放c
-        _netState0,  //0:NETWORK_EMPTY | 1:NETWORK_IDLE | 2:NETWORK_LOADING | 3:NETWORK_NO_SOURCE
-        _status0,  //0:ended | 1:play | 2:pause | -1:error
-        _interval=null;
+        _BUFFERED=0,  //已缓冲比例 0~1
+        _PLAYED=0,  //已播放比例 0~1
+        _CURRENT=0,  //当前所在时间点 单位s
+        _DURATION=0,  //视频总时长 单位s
+        _FULLSCREEN=0,  //0:非全屏 | 1:全屏 | -1:浏览器不支持全屏
+        _AUTOPLAY=false,  //自动播放
+        _LOOP=false,  //循环播放c
+        _NETSTATE=0,  //0:NETWORK_EMPTY | 1:NETWORK_IDLE | 2:NETWORK_LOADING | 3:NETWORK_NO_SOURCE
+        _STATUS=0,  //0:ended | 1:play | 2:pause | -1:error
+        _INTERVAL=null;
+    if(!obj||JSON.stringify(obj).indexOf('{')!==0)  obj={};
+    TITLE=obj['title']||"";
 
     /**
      *  初始化页面dom对象
@@ -41,6 +44,7 @@ function bulletPlayer(){
                             {
                                 'el':'p',
                                 'attr':{'class':['titleText']},
+                                'text':TITLE
                             },
                         ]
                     },
@@ -168,39 +172,39 @@ function bulletPlayer(){
      */
     let _initData={
         initSize:function(){
-            if(!video||!con||!cav) return false;
-            quality=quality>1?1:quality;
-            let _w2h=0,vw=video.videoWidth,vh=video.videoHeight;
-            if(vh>=con.clientHeight) height=con.clientHeight;
-            else  height=vh;
+            if(!VIDEO||!CON||!CAV) return false;
+            QUALITY=QUALITY>1?1:QUALITY;
+            let _w2h=0,vw=VIDEO.videoWidth,vh=VIDEO.videoHeight;
+            if(vh>=CON.clientHeight) HEIGHT=CON.clientHeight;
+            else  HEIGHT=vh;
             _w2h=vw/vh;
-            width=height*_w2h;
-            cav.height=height*quality;
-            cav.width=cav.height*_w2h;
-            cav.style.width=(cav.clientHeight*_w2h)+"px";
+            WIDTH=HEIGHT*_w2h;
+            CAV.height=HEIGHT*QUALITY;
+            CAV.width=CAV.height*_w2h;
+            CAV.style.width=(CAV.clientHeight*_w2h)+"px";
         },
         initParams:function(){
-            if(!video) return false;
-            clearInterval(_interval);
-            _interval=null;
-            playSrc=video.currentSrc;
-            video.volume=volume;
-            video.autoPlay=_autoPlay;
-            video.loop=_loop;
-            video.controls=false;
+            if(!VIDEO) return false;
+            clearInterval(_INTERVAL);
+            _INTERVAL=null;
+            PLAYSRC=VIDEO.currentSrc;
+            VIDEO.volume=VOLUME;
+            VIDEO.autoPlay=_AUTOPLAY;
+            VIDEO.loop=_LOOP;
+            VIDEO.controls=false;
         },
         resetParams:function(){
-            _duration=0;
-            _current=0;
-            _buffered=0;
-            _played=_current/_duration;
-            _netState=v.networkState;
-            _autoPlay=false;
-            _loop=false;
-            if(!document.webkitFullscreenEnabled)  _fullScreen=-1;
-            _status=0;
-            clearInterval(_interval);
-            _interval=null;
+            _DURATION=0;
+            _CURRENT=0;
+            _BUFFERED=0;
+            _PLAYED=_CURRENT/_DURATION;
+            _NETSTATE=v.networkState;
+            _AUTOPLAY=false;
+            _LOOP=false;
+            if(!document.webkitFullscreenEnabled)  _FULLSCREEN=-1;
+            _STATUS=0;
+            clearInterval(_INTERVAL);
+            _INTERVAL=null;
         }, 
     };
 
@@ -216,54 +220,55 @@ function bulletPlayer(){
      */
     let _refresh={
         refreshParams:function(){
-            if(!video) return false;
-            let v=video;
+            if(!VIDEO) return false;
+            let v=VIDEO;
 
-            _duration=v.duration;
-            _current=v.currentTime;
-            _buffered=v.buffered.length>0?v.buffered.end(v.buffered.length-1)/_duration:0;
-            _played=_current/_duration;
-            _netState=v.networkState;
-            _autoPlay=v.autoplay;
-            _loop=v.loop;
-            if(!document.webkitFullscreenEnabled)  _fullScreen=-1;
+            _DURATION=v.duration;
+            _CURRENT=v.currentTime;
+            _BUFFERED=v.buffered.length>0?v.buffered.end(v.buffered.length-1)/_DURATION:0;
+            _PLAYED=_CURRENT/_DURATION;
+            _NETSTATE=v.networkState;
+            _AUTOPLAY=v.autoplay;
+            _LOOP=v.loop;
+            if(!document.webkitFullscreenEnabled)  _FULLSCREEN=-1;
 
-            if(v.ended)  _status=0;
-            if(v.played)  _status=1;
-            if(v.paused)  _status=2;
-            if(v.error)  _status=-1;
+            if(v.ended)  _STATUS=0;
+            if(v.played)  _STATUS=1;
+            if(v.paused)  _STATUS=2;
+            if(v.error)  _STATUS=-1;
         },
         refreshUI:function(){
-            if(!video||!con) return false;
-            let buffBar=con.querySelector('.buffBar'),
-                playedBar=con.querySelector('.playedBar'),
-                handle=con.querySelector('.handle'),
-                duration=con.querySelector('.duration');
-            self.getVolume();
+            if(!VIDEO||!CON) return false;
+            let buffBar=CON.querySelector('.buffBar'),
+                playedBar=CON.querySelector('.playedBar'),
+                handle=CON.querySelector('.handle'),
+                duration=CON.querySelector('.duration');
+            SELF.getVolume();
             _refresh.refreshUI_duration(duration);
             _refresh.refreshUI_buffBar(buffBar);
             _refresh.refreshUI_playedBar(playedBar,handle);
             _refresh.refreshUI_handle(handle);
         },
         refreshUI_canvas:function(){
-            if(_status===0 || _status===-1)  _canvasControl._resetCav();
-            if(_status===1)  _canvasControl.drawCav();
-            if(_status===2)  _canvasControl.stopCav();
+            if(_STATUS===0 || _STATUS===-1)  _canvasControl._resetCav();
+            if(_STATUS===1)  _canvasControl.drawCav();
+            if(_STATUS===2)  _canvasControl.stopCav();
+            _refresh.refreshUI();
         },
         refreshUI_duration:function(duration){
-            if(duration)  duration.innerHTML=_tools.transformTime(_current)+" / "+_tools.transformTime(_duration);
+            if(duration)  duration.innerHTML=_tools.transformTime(_CURRENT)+" / "+_tools.transformTime(_DURATION);
             return duration;
         },
         refreshUI_buffBar:function(buffBar){
-            if(buffBar)  buffBar.style.width=(_buffered*100)+"%";
+            if(buffBar)  buffBar.style.width=(_BUFFERED*100)+"%";
             return buffBar;
         },
         refreshUI_playedBar:function(playedBar,handle){
-            if(playedBar&&handle)  playedBar.style.width=((_played*con.clientWidth-handle.clientWidth/2)<=0?0:(_played*con.clientWidth-handle.clientWidth/2))+"px";
+            if(playedBar&&handle)  playedBar.style.width=((_PLAYED*CON.clientWidth-handle.clientWidth/2)<=0?0:(_PLAYED*CON.clientWidth-handle.clientWidth/2))+"px";
             return playedBar;
         },
         refreshUI_handle:function(handle){
-            if(handle)  handle.style.left=(_played*con.clientWidth-handle.clientWidth/2)+"px";
+            if(handle)  handle.style.left=(_PLAYED*CON.clientWidth-handle.clientWidth/2)+"px";
             return handle;
         },
     };
@@ -281,22 +286,22 @@ function bulletPlayer(){
      */
     let _bindListener={
         bindFullScreen:function(){
-            if(!con||!cav)  return false;
-            let fs=con.querySelector('.fullScreenBtn');
-            if(_fullScreen!=-1){
+            if(!CON||!CAV)  return false;
+            let fs=CON.querySelector('.fullScreenBtn');
+            if(_FULLSCREEN!=-1){
                 fs.addEventListener('click',()=>{
-                    if(_fullScreen===0)  setTimeout(()=>{self.enterFullScreen();},100);
-                    else  setTimeout(()=>{self.exitFullScreen();},100);
+                    if(_FULLSCREEN===0)  setTimeout(()=>{SELF.enterFullScreen();},100);
+                    else  setTimeout(()=>{SELF.exitFullScreen();},100);
                 },false);
             }
         },
         bindVolumeChanged:function(){
-            if(!con)  return false;
-            let aw=con.querySelector('.volume').clientWidth,
-                v=con.querySelector('.volume'),
-                handle=con.querySelector('.volumeHandler'),
-                vv=con.querySelector('.volumeValue'),
-                vn=con.querySelector('.volumeNum'),_dragState=2;  //0:touchstart/mousedown | 1:touchmove/mousemove |2:touchend/mouseup
+            if(!CON)  return false;
+            let aw=CON.querySelector('.volume').clientWidth,
+                v=CON.querySelector('.volume'),
+                handle=CON.querySelector('.volumeHandler'),
+                vv=CON.querySelector('.volumeValue'),
+                vn=CON.querySelector('.volumeNum'),_dragState=2;  //0:touchstart/mousedown | 1:touchmove/mousemove |2:touchend/mouseup
              
             if(window.ontouchstart){
                 handle.ontouchstart=function(ev){
@@ -308,7 +313,7 @@ function bulletPlayer(){
                             handle.style.left=(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft-handle.clientWidth)+'px';
                             vv.style.width=(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft-handle.clientWidth/2)+'px';
                             vn.innerHTML=Math.floor(((Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth))*100);
-                            video.volume=(Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth);
+                            VIDEO.volume=(Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth);
                         }
                     };
                     document.ontouchend=function(){
@@ -327,22 +332,22 @@ function bulletPlayer(){
                             handle.style.left=(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft-handle.clientWidth)+'px';
                             vv.style.width=(ev.clientX-v.offsetParent.offsetLeft-v.offsetLeft-handle.clientWidth/2)+'px';
                             vn.innerHTML=Math.floor(((Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth))*100);
-                            video.volume=(Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth);
+                            VIDEO.volume=(Number(vv.style.width.split('px')[0])-handle.clientWidth/2)/(aw-handle.clientWidth);
                         }
                     };
-                    con.onmouseleave=document.onmouseup=function(){
+                    CON.onmouseleave=document.onmouseup=function(){
                         _dragState=2;
                         document.onmousemove=null;
                         document.onmouseup=null;
-                        con.onmouseleave=null;
+                        CON.onmouseleave=null;
                     };
                 };
             }
         },
         bindMouseListener:function(){
-            if(!con)  return false;
+            if(!CON)  return false;
             let _mX=0,_mY=0,_mT=null;
-            con.addEventListener('mousemove',function(ev){
+            CON.addEventListener('mousemove',function(ev){
                 _mX=0,_mY=0;
                 clearTimeout(_mT);
                 _mT=null;
@@ -367,7 +372,7 @@ function bulletPlayer(){
                 },3000);
                 
             },false);
-            con.addEventListener('mouseleave',function(ev){
+            CON.addEventListener('mouseleave',function(ev){
                 _mX=0,_mY=0;
                 clearTimeout(_mT);
                 _mT=null;
@@ -377,14 +382,14 @@ function bulletPlayer(){
             });
         },
         bindKeysListener:function(){
-            if(!con)  return false;
-            con.addEventListener('keypress',function(ev){
+            if(!CON)  return false;
+            CON.addEventListener('keypress',function(ev){
 
             });
         },
         bindHandlerDrag:function(){
-            if(!con)   return false;
-            let handle=con.querySelector('.handle'),
+            if(!CON)   return false;
+            let handle=CON.querySelector('.handle'),
              _dragState=2;  //0:touchstart/mousedown | 1:touchmove/mousemove |2:touchend/mouseup
              
             if(window.ontouchstart){
@@ -393,14 +398,14 @@ function bulletPlayer(){
                     document.ontouchmove=function(ev){
                         _dragState=1;
                         handle.style.left=(ev.clientX-handle.clientWidth/2)+'px';
-                        video.currentTime=(ev.clientX/con.clientWidth)*video.duration;
-                        if(!video.paused)  video.pause();
+                        VIDEO.currentTime=(ev.clientX/CON.clientWidth)*VIDEO.duration;
+                        if(!VIDEO.paused)  VIDEO.pause();
                     };
                     document.ontouchend=function(){
                         _dragState=2;
                         document.onmousemove=null;
                         document.onmouseup=null;
-                        video.play();
+                        VIDEO.play();
                     };
                 };
             }else{
@@ -409,63 +414,63 @@ function bulletPlayer(){
                     document.onmousemove=function(ev){
                         _dragState=1;
                         handle.style.left=(ev.clientX-handle.clientWidth/2)+'px';
-                        video.currentTime=(ev.clientX/con.clientWidth)*video.duration;
-                        if(!video.paused)  video.pause();
+                        VIDEO.currentTime=(ev.clientX/CON.clientWidth)*VIDEO.duration;
+                        if(!VIDEO.paused)  VIDEO.pause();
                     };
                     document.onmouseup=function(){
                         _dragState=2;
                         document.onmousemove=null;
                         document.onmouseup=null;
-                        video.play();
+                        VIDEO.play();
                     };
                 };
             }
         },
         bindPlay:function(){
-            if(!video||!con||!cav)   return false;
-            con.querySelectorAll('.playBtn').forEach(el=>{
+            if(!VIDEO||!CON||!CAV)   return false;
+            CON.querySelectorAll('.playBtn').forEach(el=>{
                 el.onclick=()=>{
-                    if(_status===0||_status===2)  self.playVideo();
-                    if(_status===1)  self.pauseVideo();
+                    if(_STATUS===0||_STATUS===2)  SELF.playVideo();
+                    if(_STATUS===1)  SELF.pauseVideo();
                 };
             });
-            con.querySelector('.playedCon').onclick=cav.onclick=()=>{
-                if(_status===0||_status===2)  self.playVideo();
-                if(_status===1)  self.pauseVideo();
+            CON.querySelector('.playedCon').onclick=CAV.onclick=()=>{
+                if(_STATUS===0||_STATUS===2)  SELF.playVideo();
+                if(_STATUS===1)  SELF.pauseVideo();
             };
-            video.addEventListener('play',function(){
-                con.querySelector('.playedCon').style.display='none';
-                con.querySelectorAll('.playBtn').forEach(el=>{
+            VIDEO.addEventListener('play',function(){
+                CON.querySelector('.playedCon').style.display='none';
+                CON.querySelectorAll('.playBtn').forEach(el=>{
                     el.innerHTML="pause";
                 });
-                _status=1;
+                _STATUS=1;
                 _refresh.refreshUI_canvas();
             },false);
         },
         bindPause:function(){
-            if(!video||!con)   return false;
-            video.addEventListener('pause',function(){
-                con.querySelector('.playedCon').style.display='block';
-                con.querySelectorAll('.playBtn').forEach(el=>{
+            if(!VIDEO||!CON)   return false;
+            VIDEO.addEventListener('pause',function(){
+                CON.querySelector('.playedCon').style.display='block';
+                CON.querySelectorAll('.playBtn').forEach(el=>{
                     el.innerHTML="play";
                 });
-                clearInterval(_interval);
-                _interval=null;
-                _status=2;
+                clearInterval(_INTERVAL);
+                _INTERVAL=null;
+                _STATUS=2;
                 _refresh.refreshParams();
                 _refresh.refreshUI();
             },false);
         },
         bindEnded:function(){
-            if(!video||!con)   return false;
-            video.addEventListener('ended',function(){
-                con.querySelector('.playedCon').style.display='block';
-                con.querySelectorAll('.playBtn').forEach(el=>{
+            if(!VIDEO||!CON)   return false;
+            VIDEO.addEventListener('ended',function(){
+                CON.querySelector('.playedCon').style.display='block';
+                CON.querySelectorAll('.playBtn').forEach(el=>{
                     el.innerHTML="play";
                 });
-                clearInterval(_interval);
-                _interval=null;
-                _status=1;
+                clearInterval(_INTERVAL);
+                _INTERVAL=null;
+                _STATUS=1;
                 _events.getVideoPoster();
                 _refresh.refreshParams();
                 _refresh.refreshUI();
@@ -475,6 +480,8 @@ function bulletPlayer(){
 
     /**
      *  内部调用事件
+     *      showLoading() :显示加载信息
+     *      hideLoading() :隐藏加载信息
      *      showControlBar() :显示操控栏
      *      hideControlBar() :隐藏操控栏
      *      showTitleBar() :显示标题栏
@@ -484,36 +491,48 @@ function bulletPlayer(){
      *      getVideoPoster() :获取video封面
      */
     let _events={
+        showLoading:function(){
+            CON.querySelector('.playedCon').style.display='block';
+            CON.querySelectorAll('.playBtn').forEach(el=>{
+                el.innerHTML="loading";
+            });
+        },
+        hideLoading:function(){
+            if(CON.querySelector('.playedCon').style.display=="block") CON.querySelector('.playedCon').style.display='block';
+            CON.querySelectorAll('.playBtn').forEach(el=>{
+                el.innerHTML="play";
+            });
+        },
         showControlBar:function(){
-            if(!con)  return false;
-            con.querySelector('.controlBar').style.bottom="0px";
+            if(!CON)  return false;
+            CON.querySelector('.controlBar').style.bottom="0px";
         },
         hideControlBar:function(){
-            if(!con)  return false;
-            con.querySelector('.controlBar').style.bottom=`-${con.querySelector('.controlBar').clientHeight-con.querySelector('.progressBar').clientHeight}px`;
+            if(!CON)  return false;
+            CON.querySelector('.controlBar').style.bottom=`-${CON.querySelector('.controlBar').clientHeight-CON.querySelector('.progressBar').clientHeight}px`;
         },
         showTitleBar:function(){
-            if(!con)  return false;
-            con.querySelector('.titleBar').style.top="0px";
+            if(!CON)  return false;
+            CON.querySelector('.titleBar').style.top="0px";
         },
         hideTitleBar:function(){
-            if(!con)  return false;
-            con.querySelector('.titleBar').style.top=`-${con.querySelector('.titleBar').clientHeight}px`;
+            if(!CON)  return false;
+            CON.querySelector('.titleBar').style.top=`-${CON.querySelector('.titleBar').clientHeight}px`;
         },
         showCursor:function(){
-            if(!con||!cav)  return false;
-            con.style.cursor='pointer';
-            cav.style.cursor='pointer';
+            if(!CON||!CAV)  return false;
+            CON.style.cursor='pointer';
+            CAV.style.cursor='pointer';
         },
         hideCursor:function(){
-            if(!con||!cav)  return false;
-            con.style.cursor='none';
-            cav.style.cursor='none';
+            if(!CON||!CAV)  return false;
+            CON.style.cursor='none';
+            CAV.style.cursor='none';
         },
         getVideoPoster:function(){
-            if(!video||!cav||!ctx)  return false;
-            if(video.currentTime!=0)  video.currentTime=0;
-            ctx.drawImage(video, 0, 0, width, height);
+            if(!VIDEO||!CAV||!CTX)  return false;
+            if(VIDEO.currentTime!=0)  VIDEO.currentTime=0;
+            setTimeout(()=>{CTX.drawImage(VIDEO, 0, 0, WIDTH, HEIGHT);},0);
         },
     };
 
@@ -525,25 +544,25 @@ function bulletPlayer(){
      */
     let _canvasControl={
         drawCav:function(){
-            if(!ctx||!video||_status!==1)   return false;
-            clearInterval(_interval);
-            _interval=null;
-            _interval=setInterval(()=>{
-                ctx.drawImage(video,0,0,width,height);
+            if(!CTX||!VIDEO||_STATUS!==1)   return false;
+            clearInterval(_INTERVAL);
+            _INTERVAL=null;
+            _INTERVAL=setInterval(()=>{
+                CTX.drawImage(VIDEO,0,0,WIDTH,HEIGHT);
                 _refresh.refreshParams();
                 _refresh.refreshUI();
             },33.3);
         },
         stopCav:function(){
-            if(!ctx)   return false;
-            ctx.drawImage(video,0,0,width,height);
-            clearInterval(_interval);
-            _interval=null;
+            if(!CTX)   return false;
+            CTX.drawImage(VIDEO,0,0,WIDTH,HEIGHT);
+            clearInterval(_INTERVAL);
+            _INTERVAL=null;
         },
         resetCav:function(){
-            if(!ctx)   return false;
-            clearInterval(_interval);
-            _interval=null;
+            if(!CTX)   return false;
+            clearInterval(_INTERVAL);
+            _INTERVAL=null;
         },
     };
 
@@ -562,10 +581,10 @@ function bulletPlayer(){
             return str;
         },
         console:function(type=0,...arg){
-            if(this.debug){
-                if(type===0)  console.log(...arg);
-                if(type===1)  console.info(...arg);
-                if(type===2)  console.error(...arg);
+            if(DEBUG){
+                if(type===0)  console.log('bulletPlayer',...arg);
+                if(type===1)  console.info('bulletPlayer',...arg);
+                if(type===2)  console.error('bulletPlayer',...arg);
             }
         },
     }
@@ -577,25 +596,26 @@ function bulletPlayer(){
      * 
      *  集中调用并初始化视频组件
      */
-    let _initVideo=function(el,con){
-        con=this.con,
-        video=this.el,
-        cav=con.querySelector('canvas');
-        ctx=cav.getContext('2d');
-        con.style=video.style;
-        video.style.display='none';
+    let _initVideo=function(v,c){
+        CON=c,
+        VIDEO=v,
+        CAV=CON.querySelector('canvas');
+        CTX=CAV.getContext('2d');
+        CON.style=VIDEO.style;
+        VIDEO.style.display='none';
 
         
+        _events.showLoading();
         _initData.initParams();
         _events.showControlBar();
         _events.showTitleBar();
         _events.showCursor();
         //提示元数据开始加载
-        video.addEventListener('loadstart',()=>{
+        VIDEO.addEventListener('loadstart',()=>{
             _tools.console(0,'loadstart');
         },false);
         //提示时长已改变
-        video.addEventListener('durationchange',()=>{
+        VIDEO.addEventListener('durationchange',()=>{
             _tools.console(0,'durationchange');
             _refresh.refreshUI_duration();
             
@@ -605,11 +625,11 @@ function bulletPlayer(){
             _events.hideCursor();
         },false);
         //提示元数据已加载
-        video.addEventListener('loadedmetadata',()=>{
+        VIDEO.addEventListener('loadedmetadata',()=>{
             _tools.console(0,'loadedmetadata');
         },false);
         //提示当前帧的数据可用
-        video.addEventListener('loadeddata',()=>{
+        VIDEO.addEventListener('loadeddata',()=>{
             _tools.console(0,'loadeddata');
 
             _initData.initSize();
@@ -618,13 +638,14 @@ function bulletPlayer(){
             _events.getVideoPoster();
         },false);
         //提示视频正在下载中
-        video.addEventListener('progress',()=>{
+        VIDEO.addEventListener('progress',()=>{
             _tools.console(0,'progress');
             _refresh.refreshUI_buffBar();
         },false);
         //提示已准备好开始播放
-        video.addEventListener('canplay',()=>{
+        VIDEO.addEventListener('canplay',()=>{
             _tools.console(0,'canplay');
+            _events.hideLoading();
 
             _refresh.refreshParams();
             _refresh.refreshUI();
@@ -639,6 +660,7 @@ function bulletPlayer(){
         window.addEventListener('resize',()=>{
             _initData.initSize();
             _refresh.refreshUI();
+            _events.getVideoPoster();
         },false);
     };
 
@@ -663,56 +685,56 @@ function bulletPlayer(){
         }else  return false;
     };
     this.playVideo=function(){
-        if(!video) return false;
-        video.play();
+        if(!VIDEO) return false;
+        VIDEO.play();
     };
     this.pauseVideo=function(){
-        if(!video) return false;
-        video.pause();
+        if(!VIDEO) return false;
+        VIDEO.pause();
     };
     this.getVolume=function(){
-        if(!video||!con) return false;
-        volume=video.volume;
-        let aw=con.querySelector('.volume').clientWidth,
-            vh=con.querySelector('.volumeHandler'),
-            vv=con.querySelector('.volumeValue'),
-            vn=con.querySelector('.volumeNum');
-        vh.style.left=(aw*volume-vh.clientWidth)+"px";
-        vv.style.width=(aw*volume-vh.clientWidth/2)+"px";
-        vn.innerHTML=volume*100;
-        return volume;
+        if(!VIDEO||!CON) return false;
+        VOLUME=VIDEO.volume;
+        let aw=CON.querySelector('.volume').clientWidth,
+            vh=CON.querySelector('.volumeHandler'),
+            vv=CON.querySelector('.volumeValue'),
+            vn=CON.querySelector('.volumeNum');
+        vh.style.left=(aw*VOLUME-vh.clientWidth)+"px";
+        vv.style.width=(aw*VOLUME-vh.clientWidth/2)+"px";
+        vn.innerHTML=VOLUME*100;
+        return VOLUME;
     };
     this.setVolume=function(vol=1){
-        if(!video||!con) return false;
-        video.volume=vol;
-        volume=vol;
-        let aw=con.querySelector('.volume').clientWidth,
-            vh=con.querySelector('.volumeHandler'),
-            vv=con.querySelector('.volumeValue'),
-            vn=con.querySelector('.volumeNum');
-        vh.style.left=(aw*volume-vh.clientWidth)+"px";
-        vv.style.width=(aw*volume-vh.clientWidth/2)+"px";
-        vn.innerHTML=volume*100;
+        if(!VIDEO||!CON) return false;
+        VIDEO.volume=vol;
+        VOLUME=vol;
+        let aw=CON.querySelector('.volume').clientWidth,
+            vh=CON.querySelector('.volumeHandler'),
+            vv=CON.querySelector('.volumeValue'),
+            vn=CON.querySelector('.volumeNum');
+        vh.style.left=(aw*VOLUME-vh.clientWidth)+"px";
+        vv.style.width=(aw*VOLUME-vh.clientWidth/2)+"px";
+        vn.innerHTML=VOLUME*100;
     };
     this.exitFullScreen=function(){
-        if(!video||!con) return false;
+        if(!VIDEO||!CON) return false;
         if(document.webkitFullscreenEnabled){
-            _fullScreen=0;
-            con.style.height='600px';
+            _FULLSCREEN=0;
+            CON.style.height='600px';
             _initData.initSize();
             _refresh.refreshUI();
         }
     };
     this.enterFullScreen=function(){
-        if(!video) return false;
+        if(!VIDEO) return false;
         if(document.webkitFullscreenEnabled){
             if(document.webkitCurrentFullScreenElement){
                 document.webkitCurrentFullScreenElement.forEach(el=>{
-                    if(el!=video)  el.webkitExitFullScreen();
+                    if(el!=VIDEO)  el.webkitExitFullScreen();
                 });
             }
-            _fullScreen=1;
-            con.style.height=window.innerHeight+'px';
+            _FULLSCREEN=1;
+            CON.style.height=window.innerHeight+'px';
             _initData.initSize();
             _refresh.refreshUI();
         }
