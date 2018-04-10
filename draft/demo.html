@@ -10,8 +10,8 @@
     <link href="./bulletPlayer.css" rel="stylesheet" />
 </head>
 <body>
-    <video data-bulletPlayer src="http://pgccdn.v.baidu.com/2814229709_3538424383_20171208094615.mp4?authorization=bce-auth-v1%2Fc308a72e7b874edd9115e4614e1d62f6%2F2017-12-08T01%3A46%3A33Z%2F-1%2F%2F6c1227b1cdfdd18aac6113b21417410713820acb556bc856acad153bd740f237&responseCacheControl=max-age%3D8640000&responseExpires=Sun%2C+18+Mar+2018+09%3A46%3A33+GMT&xcode=14292fba06085d817d68b489e1709e1246490c93ba2ed457&time=1523345317&_=1523258935852"></video>
-    <div data-bulletPlayer class="playerContainer-bullet">
+    <video data-bulletPlayer="data-bulletPlayer" src="http://pgccdn.v.baidu.com/2814229709_3538424383_20171208094615.mp4?authorization=bce-auth-v1%2Fc308a72e7b874edd9115e4614e1d62f6%2F2017-12-08T01%3A46%3A33Z%2F-1%2F%2F6c1227b1cdfdd18aac6113b21417410713820acb556bc856acad153bd740f237&responseCacheControl=max-age%3D8640000&responseExpires=Sun%2C+18+Mar+2018+09%3A46%3A33+GMT&xcode=14292fba06085d817d68b489e1709e1246490c93ba2ed457&time=1523345317&_=1523258935852"></video>
+    <!-- <div data-bulletPlayer class="playerContainer-bullet">
         <div class="titleBar">
             <p class="titleText">title...</p>
         </div>
@@ -25,7 +25,7 @@
             <div class="toolBar">
                 <div class="leftBar">
                     <div class="playBtn">play</div>
-                    <div class="duration"><span>00:00:00</span> / <span>00:00:00</span></div>
+                    <div class="duration">00:00:00 / 00:00:00</div>
                 </div>
                 <div class="rightBar">
                     <div class="fullScreenBtn">fullScreen</div>
@@ -40,7 +40,7 @@
             </div>
         </div>
         <div class="playedCon"><div class="playBtn">play</div></div>
-    </div>
+    </div> -->
 </body>
 <script>
     let video_bullet={
@@ -66,6 +66,121 @@
         _netState:0,  //0:NETWORK_EMPTY | 1:NETWORK_IDLE | 2:NETWORK_LOADING | 3:NETWORK_NO_SOURCE
         _status:0,  //0:ended | 1:play | 2:pause | -1:error
         _interval:null,
+        
+        _htmlObj:[//{el:'',attr:{},text:'',child:[]}
+            {
+                'el':'div',
+                'attr':{'class':['playerContainer-bullet'],'data-bulletPlayer':["data-bulletPlayer"]},
+                'child':[
+                    {
+                        'el':'div',
+                        'attr':{'class':['titleBar']},
+                        'child':[
+                            {
+                                'el':'p',
+                                'attr':{'class':['titleText']},
+                            },
+                        ]
+                    },
+                    {
+                        'el':'canvas',
+                    },
+                    {
+                        'el':'div',
+                        'attr':{'class':['controlBar']},
+                        'child':[
+                            {
+                                'el':'div',
+                                'attr':{'class':['progressBar']},
+                                'child':[
+                                    {
+                                        'el':'div',
+                                        'attr':{'class':['buffBar']}
+                                    },
+                                    {
+                                        'el':'div',
+                                        'attr':{'class':['playedBar']}
+                                    },
+                                    {
+                                        'el':'div',
+                                        'attr':{'class':['handle']}
+                                    },
+                                ]
+                            },
+                            {
+                                'el':'div',
+                                'attr':{'class':['toolBar']},
+                                'child':[
+                                    {
+                                        'el':'div',
+                                        'attr':{'class':['leftBar']},
+                                        'child':[
+                                            {
+                                                'el':'div',
+                                                'attr':{'class':['playBtn']},
+                                                'text':'play'
+                                            },
+                                            {
+                                                'el':'div',
+                                                'attr':{'class':['duration']},
+                                                'text':'00:00:00 / 00:00:00'
+                                            },
+                                        ]
+                                    },
+                                    {
+                                        'el':'div',
+                                        'attr':{'class':['rightBar']},
+                                        'child':[
+                                            {
+                                                'el':'div',
+                                                'attr':{'class':['fullScreenBtn']},
+                                                'text':'fullScreen'
+                                            },
+                                            {
+                                                'el':'div',
+                                                'attr':{'class':['volumeBar']},
+                                                'child':[
+                                                    {
+                                                        'el':'span',
+                                                        'attr':{'class':['volumeNum']},
+                                                        'text':'0'
+                                                    },
+                                                    {
+                                                        'el':'p',
+                                                        'attr':{'class':['volume']},
+                                                        'child':[
+                                                            {
+                                                                'el':'span',
+                                                                'attr':{'class':['volumeHandler']},
+                                                            },
+                                                            {
+                                                                'el':'span',
+                                                                'attr':{'class':['volumeValue']},
+                                                            },
+                                                        ]
+                                                    },
+                                                ]
+                                            },
+                                        ]
+                                    },
+                                ]
+                            },
+                        ]
+                    },
+                    {
+                        'el':'div',
+                        'attr':{'class':['playedCon']},
+                        'child':[
+                            {
+                                'el':'div',
+                                'attr':{'class':['playBtn']},
+                                'text':'play',
+                            },
+                        ]
+                    },
+                ]
+            },
+        ],
 
         /*
             外部调用事件
@@ -122,18 +237,39 @@
                     });
                 }
                 this._fullScreen=1;
-                this.con.style.height=window.screen.availHeight+'px';
+                // this.con.style.height=window.screen.availHeight+'px';
+                this.con.style.height=window.innerHeight+'px';
                 this._initSize();
                 this._refreshUI();
                 // if(!this.video.webkitDisplayingFullscreen)  this.video.webkitEnterFullScreen();
             }
         },
         
+        init:function(){
+            if(document.querySelectorAll('video[data-bulletPlayer]').length>0){
+                let self=this;
+                document.querySelectorAll('video[data-bulletPlayer]').forEach(videoDom=>{
+                    self._htmlObj.forEach(el=>{
+                        videoDom.parentElement.insertBefore(self._createDom(el),videoDom);
+                    });
+                });
+                setTimeout(()=>{
+                    let videoArr=document.querySelectorAll('video[data-bulletPlayer]'),
+                    containerArr=document.querySelectorAll('.playerContainer-bullet[data-bulletPlayer]');
+                    videoArr.forEach((el,i) => {
+                        self.initVideo(el,containerArr[i]);
+                    });
+                },0);
+            }else  return false;
+        },
         initVideo:function(el,con){
             this.con=con,
             this.video=el,
             this.cav=this.con.querySelector('canvas');
             this.ctx=this.cav.getContext('2d');
+            this.con.style=this.video.style;
+            this.video.style.display='none';
+
             
             this._initParams();
             this._showControlBar();
@@ -156,15 +292,15 @@
             //提示元数据已加载
             this.video.addEventListener('loadedmetadata',()=>{
                 this._console(0,'loadedmetadata');
-                this._refreshUI_buffBar();
-                this._refreshParams();
+                // this._refreshUI_buffBar();
+                // this._refreshParams();
             },false);
             //提示当前帧的数据可用
             this.video.addEventListener('loadeddata',()=>{
                 this._console(0,'loadeddata');
-                this._refreshParams();
 
                 this._initSize();
+                this._refreshParams();
                 this._refreshUI();
                 this._getVideoPoster();
             },false);
@@ -176,9 +312,9 @@
             //提示已准备好开始播放
             this.video.addEventListener('canplay',()=>{
                 this._console(0,'canplay');
-                this._refreshParams();
 
-                this._initSize();
+                // this._initSize();
+                this._refreshParams();
                 this._refreshUI();
                 
                 this._bindFullScreen();
@@ -201,6 +337,22 @@
         /*
             初始或重置参数
         */
+        _createDom:function(el){
+            if(!el) return false;
+            let self=this;
+            let elDom=document.createElement(el['el']);
+            if(el['attr']&&Object.keys(el['attr']).length>0)
+                Object.keys(el['attr']).forEach(a=>{
+                    if(el['attr'][a]&&el['attr'][a].length>0)  elDom.setAttribute(a,el['attr'][a].join(' '));
+                });
+            if(el['text']&&el['text']!='')  elDom.innerHTML=el['text'];
+            if(el['child']&&el['child'].length>0)
+                el['child'].forEach(chdEl=>{
+                    elDom.appendChild(self._createDom(chdEl));
+                });
+            // console.log(elDom);
+            return elDom;
+        },
         _initSize:function(){
             if(!this.video||!this.con||!this.cav) return false;
             this.quality=this.quality>1?1:this.quality;
@@ -260,9 +412,6 @@
         },
         _refreshUI:function(){
             if(!this.video||!this.con) return false;
-            if(this._status===0 || this._status===-1)  this._resetCav();
-            if(this._status===1)  this._drawCav();
-            if(this._status===2)  this._stopCav();
             let buffBar=this.con.querySelector('.buffBar'),
                 playedBar=this.con.querySelector('.playedBar'),
                 handle=this.con.querySelector('.handle'),
@@ -273,6 +422,11 @@
             this._refreshUI_playedBar(playedBar,handle);
             this._refreshUI_handle(handle);
         },
+        _refreshUI_canvas:function(){
+            if(this._status===0 || this._status===-1)  this._resetCav();
+            if(this._status===1)  this._drawCav();
+            if(this._status===2)  this._stopCav();
+        },
         _refreshUI_duration:function(duration){
             if(duration)  duration.innerHTML=this._transformTime(this._current)+" / "+this._transformTime(this._duration);
             return duration;
@@ -282,7 +436,7 @@
             return buffBar;
         },
         _refreshUI_playedBar:function(playedBar,handle){
-            if(playedBar&&handle)  playedBar.style.width=(this._played*this.con.clientWidth-handle.clientWidth/2)+"px";
+            if(playedBar&&handle)  playedBar.style.width=((this._played*this.con.clientWidth-handle.clientWidth/2)<=0?0:(this._played*this.con.clientWidth-handle.clientWidth/2))+"px";
             return playedBar;
         },
         _refreshUI_handle:function(handle){
@@ -294,14 +448,14 @@
             内部绑定事件
         */
         _bindFullScreen:function(){
-            if(!this.con)  return false;
+            if(!this.con||!this.cav)  return false;
             let fs=this.con.querySelector('.fullScreenBtn');
-            fs.addEventListener('click',()=>{
-                if(this._fullScreen>-1){
-                    if(this._fullScreen===0)  this.enterFullScreen();
-                    else  this.exitFullScreen();
-                }
-            },false);
+            if(this._fullScreen!=-1){
+                fs.addEventListener('click',()=>{
+                    if(this._fullScreen===0)  setTimeout(()=>{this.enterFullScreen();},100);
+                    else  setTimeout(()=>{this.exitFullScreen();},100);
+                },false);
+            }
         },
         _bindVolumeChanged:function(){
             if(!this.con)  return false;
@@ -425,6 +579,7 @@
                         _dragState=1;
                         handle.style.left=(ev.clientX-handle.clientWidth/2)+'px';
                         self.video.currentTime=(ev.clientX/self.con.clientWidth)*self.video.duration;
+                        if(!self.video.paused)  self.video.pause();
                     };
                     document.onmouseup=function(){
                         _dragState=2;
@@ -444,20 +599,21 @@
                     if(self._status===1)  self.pauseVideo();
                 };
             });
-            this.cav.onclick=()=>{
+            this.con.querySelector('.playedCon').onclick=this.cav.onclick=()=>{
                 if(self._status===0||self._status===2)  self.playVideo();
                 if(self._status===1)  self.pauseVideo();
             };
             this.video.addEventListener('play',function(){
+                // if(self._fullScreen===0)  setTimeout(()=>{self.enterFullScreen();},100);
+                // else  setTimeout(()=>{self.exitFullScreen();},100);
                 self.con.querySelector('.playedCon').style.display='none';
                 self.con.querySelectorAll('.playBtn').forEach(el=>{
                     el.innerHTML="pause";
                 });
                 self._status=1;
-                self._interval=setInterval(()=>{
-                    self._refreshParams();
-                    self._refreshUI();
-                },1000/30);
+                // self._refreshParams();
+                // self._refreshUI();
+                self._refreshUI_canvas();
             },false);
         },
         _bindPause:function(){
@@ -486,8 +642,8 @@
                 clearInterval(self._interval);
                 self._interval=null;
                 self._status=1;
-                self._refreshParams();
                 self._getVideoPoster();
+                self._refreshParams();
                 self._refreshUI();
             },false);
         },
@@ -523,8 +679,8 @@
         },
         _getVideoPoster:function(){
             if(!this.video||!this.cav||!this.ctx)  return false;
-            this.video.currentTime=0;
-            this.ctx.drawImage(this.video, 0, 0, this.cav.clientWidth, this.cav.clientHeight);
+            if(this.video.currentTime!=0)  this.video.currentTime=0;
+            this.ctx.drawImage(this.video, 0, 0, this.width, this.height);
         },
 
         /*
@@ -533,14 +689,28 @@
         _drawCav:function(){
             if(!this.ctx||!this.video||this._status!==1)   return false;
             let self=this;
-            self.ctx.drawImage(self.video,0,0,self.width,self.height)
+            
+            clearInterval(self._interval);
+            self._interval=null;
+            self._interval=setInterval(()=>{
+                self.ctx.drawImage(self.video,0,0,self.width,self.height);
+                self._refreshParams();
+                self._refreshUI();
+            },33.3);
         },
         _stopCav:function(){
             if(!this.ctx)   return false;
             let self=this;
-            self.ctx.drawImage(self.video,0,0,self.width,self.height)
+            self.ctx.drawImage(self.video,0,0,self.width,self.height);
+            clearInterval(self._interval);
+            self._interval=null;
         },
-        _resetCav:function(){},
+        _resetCav:function(){
+            if(!this.ctx)   return false;
+            let self=this;
+            clearInterval(self._interval);
+            self._interval=null;
+        },
 
         /*
             工具类
@@ -561,21 +731,6 @@
             }
         },
     };
-</script>
-<script>
-    
-    let videoArr=document.querySelectorAll('video[data-bulletPlayer]'),
-    containerArr=document.querySelectorAll('.playerContainer-bullet[data-bulletPlayer]');
-    videoArr.forEach((el,i) => {
-        video_bullet.initVideo(el,containerArr[i]);
-    });
-
-    // let videoDomArr=[];
-    // videoDomArr=document.querySelectorAll('video[data-bulletPlayer]');
-    // console.log(videoDomArr);
-
-    // let videoDom=videoDomArr[0],
-    //     playerDom;
-    // videoDom.parentNode.insertBefore(videoDom,playerDom);
+    video_bullet.init();
 </script>
 </html>

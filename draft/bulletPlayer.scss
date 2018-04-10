@@ -2,21 +2,23 @@
     author:bulletYuan.
     createDate:2018-4-3
 
-    version:0.0.1
-    lastModifyDate:2018-4-9
+    version: 0.0.2
+    lastModifyDate:2018-4-10
 */
 %w100-ha{width: 100%;height: auto;}
 $controlH:54px;
 $buffH:4px;
 
-video[data-bulletPlayer]{ display: none}
-div.playerContainer-bullet[data-bulletPlayer]{
+// video[data-bulletPlayer="data-bulletPlayer"]{ display: none}
+div.playerContainer-bullet[data-bulletPlayer="data-bulletPlayer"]{
     @extend %w100-ha;
     height: 600px;
     background-color: #333;
     overflow: hidden;
     position: relative;
     cursor: none;
+    &>*{-webkit-user-select:none; -moz-user-select:none; 
+        -ms-user-select:none; user-select:none;}
     &>.playedCon{
         width: 100%;
         height: 100%;
@@ -73,8 +75,6 @@ div.playerContainer-bullet[data-bulletPlayer]{
     }
     &>.controlBar{
         @extend %w100-ha;
-        -webkit-user-select:none; -moz-user-select:none; 
-        -ms-user-select:none; user-select:none;
         background: rgba($color: #333, $alpha: .43); color: #fff;
         position: absolute;
         bottom: - ($controlH - $buffH);
