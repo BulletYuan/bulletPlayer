@@ -1,3 +1,31 @@
+/*
+    author:bulletYuan.
+    createDate:2018-4-3
+
+    version: 1.0.1
+    lastModifyDate:2018-4-11
+*/
+
+/**
+ * 
+ * @param {Object} obj {
+ *  title:"",
+ *  debug:true,
+ *  stream:false,
+ *  fps:1000/30,
+ *  quality:1,
+ *  volume:1,
+ *  src:""
+ * }
+ * 
+ * title：视频标题，默认为""，为空则不显示标题栏
+ * debug：组件调试模式，默认为true，控制台会输出调试信息
+ * stream：流模式，默认为false，视频源为帧图片流（base64）
+ * fps：帧频，默认为1000/30，即1/30秒绘制一帧
+ * quality：画面质量，默认为1,范围为0-1
+ * volume：视频音量，默认为1,范围为0-1
+ * src：视频源地址，默认为""
+ */
 function bulletPlayer(obj){
     let SELF=this;
     let CTX=null,
@@ -11,6 +39,8 @@ function bulletPlayer(obj){
         PLAYSRC="",
         VOLUME=1,  //音量 0~1
         DEBUG=true,
+        STREAM=false,
+        FPS=1000/30,
         TITLE="",
 
         _BUFFERED=0,  //已缓冲比例 0~1
@@ -22,9 +52,33 @@ function bulletPlayer(obj){
         _LOOP=false,  //循环播放c
         _NETSTATE=0,  //0:NETWORK_EMPTY | 1:NETWORK_IDLE | 2:NETWORK_LOADING | 3:NETWORK_NO_SOURCE
         _STATUS=0,  //0:ended | 1:play | 2:pause | -1:error
-        _INTERVAL=null;
+        _INTERVAL=null,
+        
+        //video事件监听回调
+        _LOADSTART_FUNC="",
+        _DURATIONCHANGE_FUNC="",
+        _LOADEDMETADATA_FUNC="",
+        _LOADEDDATA_FUNC="",
+        _PROGRESS_FUNC="",
+        _CANPLAY_FUNC="",
+        _RESIZE_FUNC="",
+        _PLAY_FUNC="",
+        _PAUSE_FUNC="",
+        _ENDED_FUNC="",
+
+        //组件事件监听回调
+        _CREATE_FUNC="",
+        _INIT_FUNC="",
+        _REFRESHUI_FUNC="";
+
     if(!obj||JSON.stringify(obj).indexOf('{')!==0)  obj={};
-    TITLE=obj['title']||"";
+    TITLE=obj['title']||TITLE;
+    DEBUG=obj['debug']||DEBUG;
+    STREAM=obj['stream']||STREAM;
+    FPS=obj['fps']||FPS;
+    QUALITY=obj['quality']||QUALITY;
+    VOLUME=obj['volume']||VOLUME;
+    PLAYSRC=obj['src']||PLAYSRC;
 
     /**
      *  初始化页面dom对象
@@ -159,6 +213,7 @@ function bulletPlayer(obj){
                 el['child'].forEach(chdEl=>{
                     elDom.appendChild(_initHtmlDom.createDom(chdEl));
                 });
+            _CREATE_FUNC&&_CREATE_FUNC();
             // console.log(elDom);
             return elDom;
         },
@@ -168,30 +223,94 @@ function bulletPlayer(obj){
      *  初始化video尺寸及数据
      *      initSize() :根据video的视频原宽高计算宽高比，并应用在页面canvas的尺寸上
      *      initParams() :将video的参数赋予给全局变量中，方便调用
+     *      listenVideo() :监听video的事件
      *      resetParams() :重置全局参数变量的值
      */
     let _initData={
         initSize:function(){
             if(!VIDEO||!CON||!CAV) return false;
-            QUALITY=QUALITY>1?1:QUALITY;
+            QUALITY=Math.abs(QUALITY)>1?1:Math.abs(QUALITY);
             let _w2h=0,vw=VIDEO.videoWidth,vh=VIDEO.videoHeight;
-            if(vh>=CON.clientHeight) HEIGHT=CON.clientHeight;
-            else  HEIGHT=vh;
+            if(!HEIGHT||HEIGHT<=0){
+                if(vh>=CON.clientHeight) HEIGHT=CON.clientHeight;
+                else  HEIGHT=vh;
+            }
             _w2h=vw/vh;
             WIDTH=HEIGHT*_w2h;
             CAV.height=HEIGHT*QUALITY;
-            CAV.width=CAV.height*_w2h;
+            CAV.width=WIDTH;
             CAV.style.width=(CAV.clientHeight*_w2h)+"px";
         },
         initParams:function(){
             if(!VIDEO) return false;
             clearInterval(_INTERVAL);
             _INTERVAL=null;
-            PLAYSRC=VIDEO.currentSrc;
-            VIDEO.volume=VOLUME;
-            VIDEO.autoPlay=_AUTOPLAY;
-            VIDEO.loop=_LOOP;
-            VIDEO.controls=false;
+            setTimeout(()=>{
+                PLAYSRC=PLAYSRC||VIDEO.currentSrc;
+                VOLUME=VOLUME||VIDEO.volume;
+                _AUTOPLAY=_AUTOPLAY||VIDEO.autoPlay;
+                _LOOP=_LOOP||VIDEO.loop;
+                VIDEO.currentSrc=PLAYSRC;
+                VIDEO.volume=Math.abs(VOLUME)>1?1:Math.abs(VOLUME);
+                VIDEO.autoPlay=_AUTOPLAY;
+                VIDEO.loop=_LOOP;
+                VIDEO.controls=false;
+            },0)
+        },
+        listenVideo:function(){
+            //提示元数据开始加载
+            VIDEO.addEventListener('loadstart',()=>{
+                _tools.console(0,'loadstart');
+                _LOADSTART_FUNC&&_LOADSTART_FUNC();
+            },false);
+            //提示时长已改变
+            VIDEO.addEventListener('durationchange',()=>{
+                _tools.console(0,'durationchange');
+                _refresh.refreshUI_duration();
+                
+                _bindListener.bindMouseListener();
+                _events.hideControlBar();
+                _events.hideTitleBar();
+                _events.hideCursor();
+                _DURATIONCHANGE_FUNC&&_DURATIONCHANGE_FUNC();
+            },false);
+            //提示元数据已加载
+            VIDEO.addEventListener('loadedmetadata',()=>{
+                _tools.console(0,'loadedmetadata');
+                _LOADEDMETADATA_FUNC&&_LOADEDMETADATA_FUNC();
+            },false);
+            //提示当前帧的数据可用
+            VIDEO.addEventListener('loadeddata',()=>{
+                _tools.console(0,'loadeddata');
+
+                _initData.initSize();
+                _refresh.refreshParams();
+                _refresh.refreshUI();
+                _events.getVideoPoster();
+                _LOADEDDATA_FUNC&&_LOADEDDATA_FUNC();
+            },false);
+            //提示视频正在下载中
+            VIDEO.addEventListener('progress',()=>{
+                _tools.console(0,'progress');
+                _refresh.refreshUI_buffBar();
+                _PROGRESS_FUNC&&_PROGRESS_FUNC();
+            },false);
+            //提示已准备好开始播放
+            VIDEO.addEventListener('canplay',()=>{
+                _tools.console(0,'canplay');
+                _events.hideLoading();
+
+                _refresh.refreshParams();
+                _refresh.refreshUI();
+                
+                _bindListener.bindFullScreen();
+                _bindListener.bindVolumeChanged();
+                _bindListener.bindPlay();
+                _bindListener.bindPause();
+                _bindListener.bindEnded();
+                _bindListener.bindHandlerDrag();
+                _CANPLAY_FUNC&&_CANPLAY_FUNC();
+            },false);
         },
         resetParams:function(){
             _DURATION=0;
@@ -248,10 +367,11 @@ function bulletPlayer(obj){
             _refresh.refreshUI_buffBar(buffBar);
             _refresh.refreshUI_playedBar(playedBar,handle);
             _refresh.refreshUI_handle(handle);
+            _REFRESHUI_FUNC&&_REFRESHUI_FUNC();
         },
         refreshUI_canvas:function(){
             if(_STATUS===0 || _STATUS===-1)  _canvasControl._resetCav();
-            if(_STATUS===1)  _canvasControl.drawCav();
+            if(_STATUS===1)  _canvasControl.refreshCav();
             if(_STATUS===2)  _canvasControl.stopCav();
             _refresh.refreshUI();
         },
@@ -286,6 +406,7 @@ function bulletPlayer(obj){
      */
     let _bindListener={
         bindFullScreen:function(){
+            _tools.console(0,"bindFullScreen");
             if(!CON||!CAV)  return false;
             let fs=CON.querySelector('.fullScreenBtn');
             if(_FULLSCREEN!=-1){
@@ -296,6 +417,7 @@ function bulletPlayer(obj){
             }
         },
         bindVolumeChanged:function(){
+            _tools.console(0,"bindVolumeChanged");
             if(!CON)  return false;
             let aw=CON.querySelector('.volume').clientWidth,
                 v=CON.querySelector('.volume'),
@@ -345,6 +467,7 @@ function bulletPlayer(obj){
             }
         },
         bindMouseListener:function(){
+            _tools.console(0,"bindMouseListener");
             if(!CON)  return false;
             let _mX=0,_mY=0,_mT=null;
             CON.addEventListener('mousemove',function(ev){
@@ -382,12 +505,14 @@ function bulletPlayer(obj){
             });
         },
         bindKeysListener:function(){
+            _tools.console(0,"bindKeysListener");
             if(!CON)  return false;
             CON.addEventListener('keypress',function(ev){
 
             });
         },
         bindHandlerDrag:function(){
+            _tools.console(0,"bindHandlerDrag");
             if(!CON)   return false;
             let handle=CON.querySelector('.handle'),
              _dragState=2;  //0:touchstart/mousedown | 1:touchmove/mousemove |2:touchend/mouseup
@@ -399,13 +524,13 @@ function bulletPlayer(obj){
                         _dragState=1;
                         handle.style.left=(ev.clientX-handle.clientWidth/2)+'px';
                         VIDEO.currentTime=(ev.clientX/CON.clientWidth)*VIDEO.duration;
-                        if(!VIDEO.paused)  VIDEO.pause();
+                        if(!VIDEO.paused)  SELF.pauseVideo();
                     };
                     document.ontouchend=function(){
                         _dragState=2;
                         document.onmousemove=null;
                         document.onmouseup=null;
-                        VIDEO.play();
+                        SELF.playVideo();
                     };
                 };
             }else{
@@ -415,18 +540,19 @@ function bulletPlayer(obj){
                         _dragState=1;
                         handle.style.left=(ev.clientX-handle.clientWidth/2)+'px';
                         VIDEO.currentTime=(ev.clientX/CON.clientWidth)*VIDEO.duration;
-                        if(!VIDEO.paused)  VIDEO.pause();
+                        if(!VIDEO.paused)  SELF.pauseVideo();
                     };
                     document.onmouseup=function(){
                         _dragState=2;
                         document.onmousemove=null;
                         document.onmouseup=null;
-                        VIDEO.play();
+                        SELF.playVideo();
                     };
                 };
             }
         },
         bindPlay:function(){
+            _tools.console(0,"bindPlay");
             if(!VIDEO||!CON||!CAV)   return false;
             CON.querySelectorAll('.playBtn').forEach(el=>{
                 el.onclick=()=>{
@@ -445,9 +571,11 @@ function bulletPlayer(obj){
                 });
                 _STATUS=1;
                 _refresh.refreshUI_canvas();
+                _PLAY_FUNC&&_PLAY_FUNC();
             },false);
         },
         bindPause:function(){
+            _tools.console(0,"bindPause");
             if(!VIDEO||!CON)   return false;
             VIDEO.addEventListener('pause',function(){
                 CON.querySelector('.playedCon').style.display='block';
@@ -459,9 +587,11 @@ function bulletPlayer(obj){
                 _STATUS=2;
                 _refresh.refreshParams();
                 _refresh.refreshUI();
+                _PAUSE_FUNC&&_PAUSE_FUNC();
             },false);
         },
         bindEnded:function(){
+            _tools.console(0,"bindEnded");
             if(!VIDEO||!CON)   return false;
             VIDEO.addEventListener('ended',function(){
                 CON.querySelector('.playedCon').style.display='block';
@@ -474,6 +604,7 @@ function bulletPlayer(obj){
                 _events.getVideoPoster();
                 _refresh.refreshParams();
                 _refresh.refreshUI();
+                _ENDED_FUNC&&_ENDED_FUNC();
             },false);
         },
     };
@@ -532,30 +663,35 @@ function bulletPlayer(obj){
         getVideoPoster:function(){
             if(!VIDEO||!CAV||!CTX)  return false;
             if(VIDEO.currentTime!=0)  VIDEO.currentTime=0;
-            setTimeout(()=>{CTX.drawImage(VIDEO, 0, 0, WIDTH, HEIGHT);},0);
+            setTimeout(()=>{_canvasControl.drawCav();},0);
         },
     };
 
     /**
      *  canvas操作集合
+     *      refreshCav() :持续刷新绘制影像
      *      drawCav() :开始绘制影像
      *      stopCav() :停止绘制并保留最后绘制画面
      *      resetCav() :重置画布
      */
     let _canvasControl={
-        drawCav:function(){
+        refreshCav:function(){
             if(!CTX||!VIDEO||_STATUS!==1)   return false;
             clearInterval(_INTERVAL);
             _INTERVAL=null;
             _INTERVAL=setInterval(()=>{
-                CTX.drawImage(VIDEO,0,0,WIDTH,HEIGHT);
+                _canvasControl.drawCav();
                 _refresh.refreshParams();
                 _refresh.refreshUI();
-            },33.3);
+            },FPS);
+        },
+        drawCav:function(){
+            if(!CTX||!VIDEO)   return false;
+            CTX.drawImage(VIDEO,0,0,WIDTH,HEIGHT);
         },
         stopCav:function(){
             if(!CTX)   return false;
-            CTX.drawImage(VIDEO,0,0,WIDTH,HEIGHT);
+            _canvasControl.drawCav();
             clearInterval(_INTERVAL);
             _INTERVAL=null;
         },
@@ -591,8 +727,8 @@ function bulletPlayer(obj){
 
     /**
      * 
-     * @param { video页面Dom对象 } el 
-     * @param { bulletPlayer容器页面dom对象 } con 
+     * @param { * } el video页面Dom对象
+     * @param { * } con bulletPlayer容器页面dom对象
      * 
      *  集中调用并初始化视频组件
      */
@@ -610,41 +746,15 @@ function bulletPlayer(obj){
         _events.showControlBar();
         _events.showTitleBar();
         _events.showCursor();
-        //提示元数据开始加载
-        VIDEO.addEventListener('loadstart',()=>{
-            _tools.console(0,'loadstart');
-        },false);
-        //提示时长已改变
-        VIDEO.addEventListener('durationchange',()=>{
-            _tools.console(0,'durationchange');
-            _refresh.refreshUI_duration();
-            
+
+        _INIT_FUNC&&_INIT_FUNC();
+        
+        if(STREAM){
             _bindListener.bindMouseListener();
             _events.hideControlBar();
             _events.hideTitleBar();
             _events.hideCursor();
-        },false);
-        //提示元数据已加载
-        VIDEO.addEventListener('loadedmetadata',()=>{
-            _tools.console(0,'loadedmetadata');
-        },false);
-        //提示当前帧的数据可用
-        VIDEO.addEventListener('loadeddata',()=>{
-            _tools.console(0,'loadeddata');
-
             _initData.initSize();
-            _refresh.refreshParams();
-            _refresh.refreshUI();
-            _events.getVideoPoster();
-        },false);
-        //提示视频正在下载中
-        VIDEO.addEventListener('progress',()=>{
-            _tools.console(0,'progress');
-            _refresh.refreshUI_buffBar();
-        },false);
-        //提示已准备好开始播放
-        VIDEO.addEventListener('canplay',()=>{
-            _tools.console(0,'canplay');
             _events.hideLoading();
 
             _refresh.refreshParams();
@@ -656,17 +766,44 @@ function bulletPlayer(obj){
             _bindListener.bindPause();
             _bindListener.bindEnded();
             _bindListener.bindHandlerDrag();
-        },false);
+        }else{
+            _initData.listenVideo();
+        }
+        
         window.addEventListener('resize',()=>{
             _initData.initSize();
             _refresh.refreshUI();
-            _events.getVideoPoster();
+            if(!STREAM)  _canvasControl.drawCav();
+            _RESIZE_FUNC&&_RESIZE_FUNC();
         },false);
     };
 
     /**
      *  外部可调用方法
-     *      init() :组件初始化，将原有video元素隐藏
+     *      init() :组件初始化，将原有video元素隐藏，并返回this对象
+     *      playVideo() :播放video/帧流，并返回this对象
+     *      pauseVideo() :暂停video/帧流，并返回this对象
+     *      getVolume() :获取video音量，并返回音量
+     *      setVolume(vol=1) :设置video音量，并返回音量
+     *      exitFullScreen() :退出全屏，并返回this对象
+     *      enterFullScreen() :进入全屏，并返回this对象
+     *      draw(stream="",fn="") :绘制帧流，建议在循环绘制中调用，并返回this对象
+     *      clean(fn="") :清理当前画布，并返回this对象
+     * 
+     *      onVideoLoadStart(fn="") :当元数据开始加载时增加事件，并返回this对象
+     *      onVideoDurationChange(fn="") :当时长已改变时增加事件，并返回this对象
+     *      onVideoLoadedMetaData(fn="") :当元数据已加载时增加事件，并返回this对象
+     *      onVideoLoadedData(fn="") :当当前帧的数据可用时增加事件，并返回this对象
+     *      onVideoProgressData(fn="") :当视频正在下载中时增加事件，并返回this对象
+     *      onVideoCanPlay(fn="") :当已准备好开始播放时增加事件，并返回this对象
+     *      onResize(fn="") :当页面尺寸改变时增加事件，并返回this对象
+     *      onVideoPlay(fn="") :监听video播放时增加事件，并返回this对象
+     *      onVideoPause(fn="") :监听video暂停时增加事件，并返回this对象
+     *      onVideoEnded(fn="") :监听video结束时增加事件，并返回this对象
+     * 
+     *      onCreate(fn="") :当组件开始创建htmldom时增加事件，并返回this对象
+     *      onInit(fn="") :当组件初始化时增加事件，并返回this对象
+     *      onRefresh(fn="") :当组件每次UI刷新时增加事件，并返回this对象
      */
     this.init=function(){
         if(document.querySelectorAll('video[data-bulletPlayer]').length>0){
@@ -682,16 +819,95 @@ function bulletPlayer(obj){
                     _initVideo(el,containerArr[i]);
                 });
             },0);
+            return this;
         }else  return false;
     };
-    this.playVideo=function(){
-        if(!VIDEO) return false;
-        VIDEO.play();
-    };
-    this.pauseVideo=function(){
-        if(!VIDEO) return false;
-        VIDEO.pause();
-    };
+
+    if(!STREAM){
+        this.playVideo=function(){
+            if(!VIDEO) return false;
+            try{
+                VIDEO.play();
+            }catch(e){
+                _tools.console(2,'playVideo has error:\n'+e);
+            }
+            return this;
+        };
+        this.pauseVideo=function(){
+            if(!VIDEO) return false;
+            try{
+                VIDEO.pause();
+            }catch(e){
+                _tools.console(2,'pauseVideo has error:\n'+e);
+            }
+            return this;
+        };
+
+        this.onVideoLoadStart=function(fn){
+            if(fn&&typeof fn)  _LOADSTART_FUNC=fn;
+            return this;
+        };
+        this.onVideoDurationChange=function(fn){
+            if(fn&&typeof fn)  _DURATIONCHANGE_FUNC=fn;
+            return this;
+        };
+        this.onVideoLoadedMetaData=function(fn){
+            if(fn&&typeof fn)  _LOADEDMETADATA_FUNC=fn;
+            return this;
+        };
+        this.onVideoLoadedData=function(fn){
+            if(fn&&typeof fn)  _LOADEDDATA_FUNC=fn;
+            return this;
+        };
+        this.onVideoProgressData=function(fn){
+            if(fn&&typeof fn)  _PROGRESS_FUNC=fn;
+            return this;
+        };
+        this.onVideoCanPlay=function(fn){
+            if(fn&&typeof fn)  _CANPLAY_FUNC=fn;
+            return this;
+        };
+        this.onResize=function(fn){
+            if(fn&&typeof fn)  _RESIZE_FUNC=fn;
+            return this;
+        };
+        this.onVideoPlay=function(fn){
+            if(fn&&typeof fn)  _PLAY_FUNC=fn;
+            return this;
+        };
+        this.onVideoPause=function(fn){
+            if(fn&&typeof fn)  _PAUSE_FUNC=fn;
+            return this;
+        };
+        this.onVideoEnded=function(fn){
+            if(fn&&typeof fn)  _ENDED_FUNC=fn;
+            return this;
+        };
+    }else{
+        this.draw=function(stream,fn=""){
+            if(!CTX||!stream)   return false;
+            try{
+                CTX.drawImage(stream,0,0,WIDTH,HEIGHT);
+                _refresh.refreshParams();
+                _refresh.refreshUI();
+                fn&&fn();
+            }catch(e){
+                _tools.console(2,'playVideo has error:\n'+e);
+            }
+            return this;
+        };
+        this.clean=function(fn=""){
+            if(!CTX)   return false;
+            try{
+                  
+                CAV.height=HEIGHT;
+                fn&&fn();
+            }catch(e){
+                _tools.console(2,'playVideo has error:\n'+e);
+            }
+            return this;
+        };
+    }
     this.getVolume=function(){
         if(!VIDEO||!CON) return false;
         VOLUME=VIDEO.volume;
@@ -715,6 +931,7 @@ function bulletPlayer(obj){
         vh.style.left=(aw*VOLUME-vh.clientWidth)+"px";
         vv.style.width=(aw*VOLUME-vh.clientWidth/2)+"px";
         vn.innerHTML=VOLUME*100;
+        return VOLUME;
     };
     this.exitFullScreen=function(){
         if(!VIDEO||!CON) return false;
@@ -723,7 +940,8 @@ function bulletPlayer(obj){
             CON.style.height='600px';
             _initData.initSize();
             _refresh.refreshUI();
-        }
+            return this;
+        }else return false;
     };
     this.enterFullScreen=function(){
         if(!VIDEO) return false;
@@ -737,7 +955,22 @@ function bulletPlayer(obj){
             CON.style.height=window.innerHeight+'px';
             _initData.initSize();
             _refresh.refreshUI();
-        }
+            return this;
+        }else return false;
     };
+
+    this.onCreate=function(fn=""){
+        if(fn&&typeof fn)  _CREATE_FUNC=fn;
+        return this;
+    };
+    this.onInit=function(fn=""){
+        if(fn&&typeof fn)  _INIT_FUNC=fn;
+        return this;
+    };
+    this.onRefresh=function(fn=""){
+        if(fn&&typeof fn)  _REFRESHUI_FUNC=fn;
+        return this;
+    };
+
 
 }
