@@ -2,8 +2,8 @@
     author:bulletYuan.
     createDate:2018-4-3
 
-    version: 0.0.2
-    lastModifyDate:2018-4-10
+    version: 0.0.3
+    lastModifyDate:2018-6-6
 */
 %w100-ha{width: 100%;height: auto;}
 $controlH:54px;
@@ -17,6 +17,13 @@ div.playerContainer-bullet[data-bulletPlayer="data-bulletPlayer"]{
     overflow: hidden;
     position: relative;
     cursor: none;
+    &.rotate{  
+        transform:rotate(90deg);  
+        -ms-transform:rotate(90deg); /* IE 9 */  
+        -moz-transform:rotate(90deg); /* Firefox */  
+        -webkit-transform:rotate(90deg); /* Safari and Chrome */  
+        -o-transform:rotate(90deg); /* Opera */
+      }
     &>*{-webkit-user-select:none; -moz-user-select:none; 
         -ms-user-select:none; user-select:none;}
     &>.playedCon{
