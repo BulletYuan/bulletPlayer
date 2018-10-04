@@ -1,0 +1,19 @@
+{
+  "name": "bulletplayer",
+  "version": "1.0.3",
+  "description": "a video-player by canvas",
+  "main": "bulletPlayer-1.0.3.dev.js",
+  "scripts": {
+    "test": "npm test"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/BulletYuan/bulletPlayer.git"
+  },
+  "author": "bulletyuan",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/BulletYuan/bulletPlayer/issues"
+  },
+  "homepage": "https://github.com/BulletYuan/bulletPlayer#readme"
+}
